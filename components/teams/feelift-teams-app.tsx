@@ -579,7 +579,7 @@ function BadResponseCard({ onReset, onOpenMobileApp }: { onReset: () => void; on
 
       {/* ── Open App banner ── */}
       <button
-        onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/lift" }}
+        onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/checkin" }}
         onMouseEnter={() => setHovered("app")}
         onMouseLeave={() => setHovered(null)}
         style={{
