@@ -759,7 +759,7 @@ function BadResponseCard({ onReset }: { onReset: () => void }) {
                   hovered={hovered === "app"}
                   onEnter={() => setHovered("app")}
                   onLeave={() => setHovered(null)}
-                  onClick={() => { window.location.href = "http://localhost:3000/lift";
+                  onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/lift";
                   }}
                   pulseRings={false}
                 >
