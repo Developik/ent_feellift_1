@@ -297,7 +297,7 @@ export default function TeamsDemo() {
         </div>
       </div>
 
-      <TeamsHeader userName="Alex Peterson" userInitials={userInitials} />
+      <TeamsHeader userName="Nick Kohuch" userInitials={userInitials} />
 
       <div className="flex-1 flex overflow-hidden">
         <TeamsSidebar
