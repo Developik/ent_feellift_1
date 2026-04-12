@@ -1,0 +1,288 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Feelift warm sunrise palette */
+  --background: #1a1a2e;
+  --foreground: #faf8f5;
+  --card: #232342;
+  --card-foreground: #faf8f5;
+  --popover: #2a2a4a;
+  --popover-foreground: #faf8f5;
+  --primary: #e87040;
+  --primary-foreground: #ffffff;
+  --secondary: #2d2d4d;
+  --secondary-foreground: #faf8f5;
+  --muted: #3a3a5a;
+  --muted-foreground: #8a9ab8;
+  --accent: #f5b87a;
+  --accent-foreground: #2d3a5c;
+  --destructive: #e85050;
+  --destructive-foreground: #ffffff;
+  --border: #3a3a5a;
+  --input: #2d2d4d;
+  --ring: #e87040;
+  
+  /* Feelift brand colors */
+  --feelift-sky: #a8c8f0;
+  --feelift-peach: #f5b87a;
+  --feelift-orange: #e87040;
+  --feelift-soft-orange: #f5a070;
+  --feelift-text-dark: #2d3a5c;
+  --feelift-text-mid: #5a6a8a;
+  --feelift-text-light: #8a9ab8;
+  --feelift-card: rgba(255,248,240,0.95);
+  --feelift-card-border: rgba(168,200,240,0.45);
+  
+  /* Teams purple for Teams UI */
+  --teams-purple: #6264a7;
+  
+  /* Status colors */
+  --success: #4ade80;
+  --warning: #fbbf24;
+  
+  --chart-1: #e87040;
+  --chart-2: #a8c8f0;
+  --chart-3: #f5b87a;
+  --chart-4: #4ade80;
+  --chart-5: #f472b6;
+  
+  --radius: 0.625rem;
+  --sidebar: #16162a;
+  --sidebar-foreground: #faf8f5;
+  --sidebar-primary: #e87040;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2d2d4d;
+  --sidebar-accent-foreground: #faf8f5;
+  --sidebar-border: #3a3a5a;
+  --sidebar-ring: #e87040;
+}
+
+.dark {
+  --background: #1a1a2e;
+  --foreground: #faf8f5;
+  --card: #232342;
+  --card-foreground: #faf8f5;
+  --popover: #2a2a4a;
+  --popover-foreground: #faf8f5;
+  --primary: #e87040;
+  --primary-foreground: #ffffff;
+  --secondary: #2d2d4d;
+  --secondary-foreground: #faf8f5;
+  --muted: #3a3a5a;
+  --muted-foreground: #8a9ab8;
+  --accent: #f5b87a;
+  --accent-foreground: #2d3a5c;
+  --destructive: #e85050;
+  --destructive-foreground: #ffffff;
+  --border: #3a3a5a;
+  --input: #2d2d4d;
+  --ring: #e87040;
+  --sidebar: #16162a;
+  --sidebar-foreground: #faf8f5;
+  --sidebar-primary: #e87040;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2d2d4d;
+  --sidebar-accent-foreground: #faf8f5;
+  --sidebar-border: #3a3a5a;
+  --sidebar-ring: #e87040;
+}
+
+@theme inline {
+  --font-sans: 'Segoe UI', 'Geist', sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-serif: 'Georgia', serif;
+  
+  --color-teams-purple: var(--teams-purple);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-feelift-sky: var(--feelift-sky);
+  --color-feelift-peach: var(--feelift-peach);
+  --color-feelift-orange: var(--feelift-orange);
+  
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Feelift animations */
+@keyframes fl-float-a {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(13px, 19px); }
+}
+
+@keyframes fl-float-b {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-14px, 10px); }
+}
+
+@keyframes fl-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes fl-glow {
+  0%, 100% { box-shadow: 0 6px 28px rgba(232,112,64,0.28); }
+  50% { box-shadow: 0 12px 44px rgba(232,112,64,0.52); }
+}
+
+@keyframes fl-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes fl-ripple {
+  0% { transform: scale(0.85); opacity: 0.5; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes fl-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fl-slide-down {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fl-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fl-scale-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fl-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  60% { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fl-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes fl-typing {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
+@keyframes fl-wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes fl-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fl-spin-reverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes fl-bounce-in {
+  0% { opacity: 0; transform: scale(0.3) translateY(30px); }
+  50% { transform: scale(1.05) translateY(-5px); }
+  70% { transform: scale(0.95) translateY(2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fl-message-arrive {
+  0% { opacity: 0; transform: translateX(-30px) scale(0.95); }
+  60% { transform: translateX(5px) scale(1.02); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes fl-notification-pop {
+  0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+  50% { transform: scale(1.1) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes fl-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fl-card-hover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes fl-icon-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(-5deg); }
+  75% { transform: translateY(-2px) rotate(3deg); }
+}
+
+.fl-animate-float-a { animation: fl-float-a 9s ease-in-out infinite; }
+.fl-animate-float-b { animation: fl-float-b 11s ease-in-out infinite; }
+.fl-animate-pulse { animation: fl-pulse 2s ease-in-out infinite; }
+.fl-animate-glow { animation: fl-glow 3s ease-in-out infinite; }
+.fl-animate-breathe { animation: fl-breathe 4s ease-in-out infinite; }
+.fl-animate-shimmer { animation: fl-shimmer 2.5s linear infinite; background-size: 400% 100%; }
+.fl-animate-spin { animation: fl-spin 8s linear infinite; }
+.fl-animate-spin-reverse { animation: fl-spin-reverse 12s linear infinite; }
+.fl-animate-gradient { animation: fl-gradient-shift 8s ease infinite; background-size: 200% 200%; }
+
+.fl-card-interactive {
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.fl-card-interactive:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+.fl-card-interactive:active {
+  transform: scale(0.98);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
