@@ -478,15 +478,11 @@ function BreathingExercise({ phase, count, done, onComplete }: {
   return (
     <div className="anim-fade" style={{ textAlign: "center", width: "100%", maxWidth: 340 }}>
       <div style={{ position: "relative", width: 190, height: 190, margin: "0 auto 22px" }}>
-        {/* outer glow */}
         <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle,rgba(168,200,240,0.18),transparent 70%)", transform: `scale(${scale[phase] * 1.18})`, transition: `transform ${dur[phase]} ease-in-out` }} />
-        {/* mid ring */}
         <div style={{ position: "absolute", inset: "10%", borderRadius: "50%", background: "radial-gradient(circle,rgba(245,184,122,0.22),transparent 70%)", transform: `scale(${scale[phase] * 1.08})`, transition: `transform ${dur[phase]} ease-in-out` }} />
-        {/* core */}
         <div style={{ position: "absolute", inset: "20%", borderRadius: "50%", background: "linear-gradient(135deg,rgba(168,200,240,0.9),rgba(245,184,122,0.9),rgba(232,112,64,0.9))", boxShadow: "0 18px 50px rgba(168,200,240,0.35)", transform: `scale(${scale[phase]})`, transition: `transform ${dur[phase]} ease-in-out`, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Wind size={32} color="white" style={{ opacity: 0.85 }} />
         </div>
-        {/* outline ring */}
         <div style={{ position: "absolute", inset: "18%", borderRadius: "50%", border: "1.5px solid rgba(232,112,64,0.38)", transform: `scale(${scale[phase]})`, transition: `transform ${dur[phase]} ease-in-out` }} />
       </div>
 
@@ -557,6 +553,7 @@ function AfterBreathingCard({ onFeelBetter, onStillBad }: { onFeelBetter: () => 
 }
 
 // ─── Bad response ─────────────────────────────────────────────────────────────
+// Single-column layout — no grid, guaranteed to fit without scrolling.
 
 function BadResponseCard({ onReset, onOpenMobileApp }: { onReset: () => void; onOpenMobileApp: () => void }) {
   const [hovered, setHovered] = useState<string | null>(null)
@@ -568,96 +565,93 @@ function BadResponseCard({ onReset, onOpenMobileApp }: { onReset: () => void; on
 
   return (
     <Card accentColors="linear-gradient(90deg,#f5b87a,#e87040,#f5b87a)">
-      <div style={{ textAlign: "center", marginBottom: 16 }}>
-        <div style={{ width: 52, height: 52, borderRadius: "50%", margin: "0 auto 10px", background: "linear-gradient(135deg,rgba(245,184,122,0.22),rgba(232,112,64,0.18))", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Heart size={22} color="#e87040" />
+
+      {/* ── Header row: icon + text side-by-side ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg,rgba(245,184,122,0.28),rgba(232,112,64,0.22))", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(232,112,64,0.18)" }}>
+          <Heart size={20} color="#e87040" />
         </div>
-        <p style={{ fontSize: 20, fontWeight: 600, color: "#2d3a5c", margin: "0 0 4px" }}>We're here for you</p>
-        <p style={{ fontSize: 13, color: "#5a6a8a", margin: 0 }}>You don't have to navigate this alone</p>
+        <div>
+          <p style={{ margin: "0 0 2px", fontSize: 16, fontWeight: 600, color: "#2d3a5c" }}>We're here for you</p>
+          <p style={{ margin: 0, fontSize: 12, color: "#5a6a8a" }}>You don't have to navigate this alone</p>
+        </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+      {/* ── Open App banner ── */}
+      <button
+        onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/lift" }}
+        onMouseEnter={() => setHovered("app")}
+        onMouseLeave={() => setHovered(null)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", gap: 12,
+          padding: "10px 14px", borderRadius: 16, border: "none", cursor: "pointer", marginBottom: 10,
+          background: hovered === "app"
+            ? "linear-gradient(135deg,#a8c8f0,#f5b87a,#e87040)"
+            : "linear-gradient(135deg,rgba(168,200,240,0.14),rgba(245,184,122,0.1))",
+          boxShadow: hovered === "app" ? "0 8px 24px rgba(232,112,64,0.28)" : "0 2px 10px rgba(168,200,240,0.16)",
+          transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+          transform: hovered === "app" ? "scale(1.02)" : "scale(1)",
+          border: hovered === "app" ? "none" : "0.5px solid rgba(168,200,240,0.3)" as any,
+        }}
+      >
+        <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, overflow: "hidden", boxShadow: "0 2px 8px rgba(232,112,64,0.2)" }}>
+          <img src="/logo-my-1.png" alt="App" width={44} height={44} style={{ display: "block" }} />
+        </div>
+        <div style={{ flex: 1, textAlign: "left" }}>
+          <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 600, color: hovered === "app" ? "white" : "#2d3a5c", transition: "color 0.25s" }}>Open FeelLift App</p>
+          <p style={{ margin: 0, fontSize: 11, color: hovered === "app" ? "rgba(255,255,255,0.8)" : "#5a6a8a", transition: "color 0.25s" }}>Do a private memory recall session</p>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 3, padding: "3px 7px", borderRadius: 20, background: hovered === "app" ? "rgba(255,255,255,0.22)" : "rgba(74,222,128,0.12)", fontSize: 10, fontWeight: 500, color: hovered === "app" ? "white" : "#22c55e", transition: "all 0.25s" }}>
+            <Lock size={8} /> Private
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 3, padding: "3px 7px", borderRadius: 20, background: hovered === "app" ? "rgba(255,255,255,0.18)" : "rgba(168,200,240,0.18)", fontSize: 10, color: hovered === "app" ? "white" : "#5a6a8a", transition: "all 0.25s" }}>
+            <Shield size={8} /> Not shared
+          </div>
+        </div>
+      </button>
 
-        {/* App CTA */}
-        <div style={{ borderRadius: 18, padding: "14px 12px", background: "linear-gradient(160deg,rgba(168,200,240,0.1),rgba(245,184,122,0.07))", border: "0.5px solid rgba(168,200,240,0.28)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-          <p style={{ margin: 0, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#5a6a8a" }}>Go to App</p>
-          <p style={{ margin: 0, fontSize: 11, color: "#5a6a8a", textAlign: "center", lineHeight: 1.4 }}>Do a memory recall session on the FeelLift App</p>
+      {/* ── Immediate help label ── */}
+      <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#5a6a8a" }}>Immediate Help</p>
 
-          <div style={{ position: "relative", padding: 14 }}>
-            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1.5px solid rgba(232,112,64,0.3)", animation: "fl-ring 2.5s ease-in-out infinite", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", inset: -8, borderRadius: "50%", border: "1.5px solid rgba(245,184,122,0.22)", animation: "fl-ring 2.5s 0.7s ease-in-out infinite", pointerEvents: "none" }} />
-            <button
-              onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/lift" }}
-              onMouseEnter={() => setHovered("app")}
+      {/* ── Resource rows ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+        {resources.map((r, i) => {
+          const isHov = hovered === r.id
+          return (
+            <button key={r.id}
+              onMouseEnter={() => setHovered(r.id)}
               onMouseLeave={() => setHovered(null)}
               style={{
-                width: 72, height: 72, borderRadius: "50%", border: "none", cursor: "pointer",
-                background: hovered === "app" ? "linear-gradient(135deg,#a8c8f0,#f5b87a,#e87040)" : "linear-gradient(135deg,rgba(168,200,240,0.3),rgba(245,184,122,0.2))",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: hovered === "app" ? "0 10px 28px rgba(232,112,64,0.32)" : "0 4px 14px rgba(168,200,240,0.2)",
-                transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-                transform: hovered === "app" ? "scale(1.08)" : "scale(1)",
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 14px", borderRadius: 14, border: "none", cursor: "pointer", textAlign: "left",
+                background: isHov ? "white" : "rgba(255,248,240,0.85)",
+                boxShadow: isHov ? `0 6px 20px ${r.glow}, 0 2px 8px rgba(168,200,240,0.1)` : "0 1px 6px rgba(168,200,240,0.12)",
+                border: isHov ? "none" : "0.5px solid rgba(168,200,240,0.25)" as any,
+                transition: "all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+                transform: isHov ? "scale(1.02) translateX(2px)" : "scale(1)",
+                animation: `fl-slide-up 0.4s ${0.1 + i * 0.08}s ease both`,
               }}
             >
-              <img src="/logo-my-1.png" alt="App" width={44} height={44} style={{ borderRadius: 12 }} />
+              <div style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0, background: isHov ? `linear-gradient(135deg,${r.grad[0]},${r.grad[1]})` : `${r.grad[1]}18`, boxShadow: isHov ? `0 4px 12px ${r.glow}` : "none", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.22s" }}>
+                <ArrowRight size={14} color={isHov ? "white" : r.grad[1]} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#2d3a5c" }}>{r.label}</p>
+                <p style={{ margin: "1px 0 0", fontSize: 11, color: "#5a6a8a" }}>{r.sub}</p>
+              </div>
+              <ChevronRight size={14} color={isHov ? r.grad[1] : "#c0cce0"} style={{ flexShrink: 0, transition: "color 0.2s" }} />
             </button>
-          </div>
-
-          <div>
-            <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 600, color: "#2d3a5c", textAlign: "center" }}>Open App</p>
-            <p style={{ margin: 0, fontSize: 10, color: "#5a6a8a", textAlign: "center" }}>Continue privately</p>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "4px 8px", borderRadius: 20, background: "rgba(74,222,128,0.12)", fontSize: 10, fontWeight: 500, color: "#22c55e" }}>
-              <Lock size={9} /> 100% Private
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "4px 8px", borderRadius: 20, background: "rgba(168,200,240,0.18)", fontSize: 10, color: "#5a6a8a" }}>
-              <Shield size={9} /> Not shared with employer
-            </div>
-          </div>
-        </div>
-
-        {/* Resources */}
-        <div style={{ borderRadius: 18, padding: "14px 12px", background: "linear-gradient(160deg,rgba(245,184,122,0.1),rgba(232,112,64,0.06))", border: "0.5px solid rgba(245,184,122,0.26)", display: "flex", flexDirection: "column", gap: 8 }}>
-          <p style={{ margin: 0, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#5a6a8a", textAlign: "center" }}>Immediate Help</p>
-
-          {resources.map((r, i) => {
-            const isHov = hovered === r.id
-            return (
-              <button key={r.id}
-                onMouseEnter={() => setHovered(r.id)}
-                onMouseLeave={() => setHovered(null)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8, padding: "10px 10px",
-                  borderRadius: 14, border: "none", cursor: "pointer", textAlign: "left",
-                  background: isHov ? "white" : "rgba(255,255,255,0.55)",
-                  boxShadow: isHov ? `0 6px 20px ${r.glow}, 0 2px 8px rgba(168,200,240,0.12)` : "0 2px 8px rgba(168,200,240,0.1)",
-                  transition: "all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-                  transform: isHov ? "scale(1.03) translateX(2px)" : "scale(1)",
-                  animation: `fl-slide-up 0.4s ${0.1 + i * 0.08}s ease both`,
-                }}
-              >
-                <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: isHov ? `linear-gradient(135deg,${r.grad[0]},${r.grad[1]})` : `${r.grad[1]}18`, boxShadow: isHov ? `0 4px 12px ${r.glow}` : "none", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.22s" }}>
-                  <ArrowRight size={12} color={isHov ? "white" : r.grad[1]} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: "#2d3a5c", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</p>
-                  <p style={{ margin: "2px 0 0", fontSize: 9, color: "#5a6a8a", letterSpacing: "0.02em" }}>{r.sub}</p>
-                </div>
-              </button>
-            )
-          })}
-
-          <p style={{ margin: "auto 0 0", fontSize: 9, color: "#5a6a8a", textAlign: "center", opacity: 0.7, lineHeight: 1.4 }}>
-            All resources are confidential and independent of your workplace
-          </p>
-        </div>
+          )
+        })}
       </div>
 
-      <div style={{ textAlign: "center" }}>
-        <Button variant="ghost" size="sm" onClick={onReset} style={{ color: "#5a6a8a" }}>I'll check in later</Button>
+      {/* ── Footer note + dismiss ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <p style={{ margin: 0, fontSize: 10, color: "#5a6a8a", opacity: 0.65, maxWidth: "55%", lineHeight: 1.4 }}>All resources are confidential and independent of your workplace</p>
+        <Button variant="ghost" size="sm" onClick={onReset} style={{ color: "#5a6a8a", flexShrink: 0 }}>I'll check in later</Button>
       </div>
+
     </Card>
   )
 }
