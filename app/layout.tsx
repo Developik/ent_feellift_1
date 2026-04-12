@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Feelift - Employee Wellness for Microsoft Teams',
+  title: 'FeelLift - Employee Wellness for Microsoft Teams',
   description: 'Proactive employee wellness check-ins integrated with Microsoft Teams. Immediate help with breathing exercises, uplift videos, and private support.',
   generator: 'v0.app',
   icons: {

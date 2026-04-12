@@ -118,7 +118,7 @@ export function TeamsSidebar({ activeTab, onTabChange, hasNotification }: TeamsS
                     height={80}
                   />              </div>
           </div>
-          <span className="text-[10px] font-medium">Feelift</span>
+          <span className="text-[10px] font-medium">FeelLift</span>
         </button>
       </nav>
 

@@ -91,7 +91,7 @@ export function PhoneAppPreview() {
                       <span className="font-serif font-bold text-white text-sm">fl</span>
                     </div>
                     <div>
-                      <span className="font-semibold text-sm" style={{ color: P.textDark }}>Feelift</span>
+                      <span className="font-semibold text-sm" style={{ color: P.textDark }}>FeelLift</span>
                       <p className="text-[10px]" style={{ color: P.textLight }}>Your sanctuary</p>
                     </div>
                   </div>

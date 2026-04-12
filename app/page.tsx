@@ -112,7 +112,7 @@ export default function TeamsDemo() {
                     height={80}
                   />              </div>
               <div className="text-left">
-                <p className="text-xl font-serif font-bold" style={{ color: P.textDark }}>Feelift</p>
+                <p className="text-xl font-serif font-bold" style={{ color: P.textDark }}>FeelLift</p>
                 <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: P.textMid }}>
                   Employee Wellness
                 </p>
@@ -194,7 +194,7 @@ export default function TeamsDemo() {
                   color: P.textDark,
                   backdropFilter: "blur(8px)",
                 }}
-                onClick={() => setShowPhonePreview(true)}
+                onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/app";}}
               >
                 <Smartphone className="w-4 h-4" />
                 View Mobile App
@@ -269,13 +269,12 @@ export default function TeamsDemo() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ background: P.orange }} />
-            <span className="text-sm font-bold" style={{ color: P.textDark }}>Demo Mode</span>
           </div>
           <div className="h-4 w-px" style={{ background: P.cardBorder }} />
           <p className="text-xs" style={{ color: P.textMid }}>
             {showNotification
-              ? "Click the Feelift app in the sidebar to start your check-in"
-              : "Watch for the notification on the Feelift app..."}
+              ? "Click the FeelLift app in the sidebar to start your check-in"
+              : "Watch for the notification on the FeelLift app..."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -368,7 +367,7 @@ function DefaultTeamsContent({
                   You have a new check-in!
                 </h3>
                 <p className="text-sm mt-2" style={{ color: P.textMid }}>
-                  Click the Feelift app in the sidebar to start your daily wellness check-in.
+                  Click the FeelLift app in the sidebar to start your daily wellness check-in.
                 </p>
               </div>
               <button
@@ -376,7 +375,7 @@ function DefaultTeamsContent({
                 style={{ background: P.orange }}
                 onClick={onGoToFeelit}
               >
-                Open Feelift <ArrowRight className="w-4 h-4" />
+                Open FeelLift <ArrowRight className="w-4 h-4" />
               </button>
             </>
           ) : (
@@ -397,7 +396,7 @@ function DefaultTeamsContent({
                   {tabNames[activeTab]}
                 </h3>
                 <p className="text-sm mt-1" style={{ color: P.textMid }}>
-                  This is a demo. Watch for the Feelift notification...
+                  This is a demo. Watch for the FeelLift notification...
                 </p>
               </div>
               <div className="flex items-center justify-center gap-2">

@@ -124,9 +124,12 @@ export function FeeliftTeamsApp({ isVisible, onOpenMobileApp }: FeeliftTeamsAppP
   }, [step])
 
   const onMood = (mood: "good" | "ehh" | "bad") => {
-    if      (mood === "good") setStep("good-response")
-    else if (mood === "ehh")  setStep("ehh-weather")
-    else                      setStep("bad-response")
+    if (mood === "good") {
+      setStep("good-response")
+    } else {
+      // Both "ehh" and "bad" go through the same weather → energy → breathing flow
+      setStep("ehh-weather")
+    }
   }
 
   const reset = () => {
@@ -162,7 +165,7 @@ export function FeeliftTeamsApp({ isVisible, onOpenMobileApp }: FeeliftTeamsAppP
                   />              </div>
           </div>
           <div>
-            <h1 className="text-lg font-semibold" style={{ color: P.textDark }}>Feelift</h1>
+            <h1 className="text-lg font-semibold" style={{ color: P.textDark }}>FeelLift</h1>
             <p className="text-xs" style={{ color: P.textMid }}>Daily Check-in</p>
           </div>
         </div>
@@ -205,7 +208,7 @@ export function FeeliftTeamsApp({ isVisible, onOpenMobileApp }: FeeliftTeamsAppP
         )}
         {step === "ehh-after"      && (
           <AfterBreathingCard
-            onFeelBetter={reset}
+            onFeelBetter={() => setStep("good-response")}
             onStillBad={() => setStep("bad-response")}
           />
         )}
@@ -442,7 +445,7 @@ function GoodResponseCard({ onReset }: { onReset: () => void }) {
   )
 }
 
-// ─── Weather Card (OK path — step 1 of 2) ────────────────────────────────────
+// ─── Weather Card (shared step 1 of 2) ───────────────────────────────────────
 
 function WeatherCard({
   selected,
@@ -512,7 +515,7 @@ function WeatherCard({
   )
 }
 
-// ─── Energy Card (OK path — step 2 of 2) ─────────────────────────────────────
+// ─── Energy Card (shared step 2 of 2) ────────────────────────────────────────
 
 function EnergyCard({
   selected,
@@ -759,8 +762,7 @@ function BadResponseCard({ onReset }: { onReset: () => void }) {
                   hovered={hovered === "app"}
                   onEnter={() => setHovered("app")}
                   onLeave={() => setHovered(null)}
-                  onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/lift";
-                  }}
+                  onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/lift" }}
                   pulseRings={false}
                 >
                   <svg width="80px" height="80px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
