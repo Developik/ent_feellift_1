@@ -5,15 +5,16 @@ import {
   Heart, Sun, Shield, Lock, Send, Sparkles,
   MessageCircle, LifeBuoy, Settings as SettingsIcon,
   Check, Phone, BookOpen, Wind, Trash2, ChevronRight,
-  AlertTriangle, Eye, Bell, Info,
+  ChevronLeft, AlertTriangle, Info, Calendar, Clock,
+  MessageSquareText,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type TabId = "chat" | "support" | "settings"
 type ChatStep = 0 | 1 | 2 | 3  // check-in, reflect, suggest, wrap-up
 type Sender = "ai" | "user"
+type SupportPageId = "list" | "crisis" | "therapist" | "breathing" | "articles"
 
 interface ChatMessage {
   id: number
@@ -25,22 +26,21 @@ interface ChatMessage {
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-interface FeeliftTeamsAppProps {
+interface AuraTeamsAppProps {
   isVisible: boolean
-  onOpenMobileApp: () => void
 }
 
 const STEP_LABELS = ["Check-in", "Reflect", "Suggest", "Wrap-up"] as const
-const SESSION_LIMIT = 5 * 60 // 5:00
 
 const CSS = `
-  @keyframes fl-breathe  { 0%,100%{transform:scale(1)}                         50%{transform:scale(1.08)} }
-  @keyframes fl-fade-in  { from{opacity:0;transform:translateY(8px)}           to{opacity:1;transform:none} }
-  @keyframes fl-pop      { 0%{transform:scale(0.85);opacity:0}                 60%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
-  @keyframes fl-dot      { 0%,100%{transform:translateY(0);opacity:0.4}        50%{transform:translateY(-4px);opacity:1} }
-  @keyframes fl-slide-up { from{opacity:0;transform:translateY(12px)}          to{opacity:1;transform:none} }
-  @keyframes fl-shimmer  { 0%{background-position:200% 0}                      100%{background-position:-200% 0} }
-  @keyframes fl-stepPulse{ 0%,100%{box-shadow:0 0 0 0 rgba(232,112,64,0.45)}   70%{box-shadow:0 0 0 8px rgba(232,112,64,0)} }
+  @keyframes fl-breathe   { 0%,100%{transform:scale(1)}                         50%{transform:scale(1.08)} }
+  @keyframes fl-fade-in   { from{opacity:0;transform:translateY(8px)}           to{opacity:1;transform:none} }
+  @keyframes fl-pop       { 0%{transform:scale(0.85);opacity:0}                 60%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+  @keyframes fl-dot       { 0%,100%{transform:translateY(0);opacity:0.4}        50%{transform:translateY(-4px);opacity:1} }
+  @keyframes fl-slide-up  { from{opacity:0;transform:translateY(12px)}          to{opacity:1;transform:none} }
+  @keyframes fl-shimmer   { 0%{background-position:200% 0}                      100%{background-position:-200% 0} }
+  @keyframes fl-stepPulse { 0%,100%{box-shadow:0 0 0 0 rgba(232,112,64,0.45)}   70%{box-shadow:0 0 0 8px rgba(232,112,64,0)} }
+  @keyframes aura-breathe-big { 0%,100%{transform:scale(0.78);box-shadow:0 0 30px rgba(168,200,240,0.35)} 50%{transform:scale(1.18);box-shadow:0 0 60px rgba(232,112,64,0.4)} }
   .anim-fade { animation: fl-fade-in 0.35s ease both }
   .anim-pop  { animation: fl-pop     0.4s  ease both }
   .anim-up   { animation: fl-slide-up 0.4s ease both }
@@ -48,7 +48,7 @@ const CSS = `
   .fl-scroll::-webkit-scrollbar-thumb { background: rgba(168,200,240,0.4); border-radius: 4px }
 `
 
-export function FeeliftTeamsApp({ isVisible, onOpenMobileApp }: FeeliftTeamsAppProps) {
+export function FeeliftTeamsApp({ isVisible }: AuraTeamsAppProps) {
   const [activeTab, setActiveTab] = useState<TabId>("chat")
 
   // Memory state — for the demo, a past topic is remembered by default.
@@ -93,10 +93,10 @@ export function FeeliftTeamsApp({ isVisible, onOpenMobileApp }: FeeliftTeamsAppP
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 38, height: 38, borderRadius: 12, overflow: "hidden", flexShrink: 0, animation: "fl-breathe 3s ease-in-out infinite", boxShadow: "0 0 14px rgba(232,112,64,0.22)" }}>
-            <img src="/logo-my-1.png" alt="FeelLift" width={38} height={38} style={{ display: "block" }} />
+            <img src="/logo-my-1.png" alt="Aura" width={38} height={38} style={{ display: "block" }} />
           </div>
           <div>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#2d3a5c", lineHeight: 1.2 }}>FeelLift</p>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#2d3a5c", lineHeight: 1.2 }}>Aura</p>
             <p style={{ margin: 0, fontSize: 11, color: "#5a6a8a", lineHeight: 1.2 }}>Anonymous &amp; confidential</p>
           </div>
         </div>
@@ -125,9 +125,7 @@ export function FeeliftTeamsApp({ isVisible, onOpenMobileApp }: FeeliftTeamsAppP
             onOpenSupport={() => setActiveTab("support")}
           />
         )}
-        {activeTab === "support" && (
-          <SupportView onOpenMobileApp={onOpenMobileApp} />
-        )}
+        {activeTab === "support" && <SupportView />}
         {activeTab === "settings" && (
           <SettingsView
             memoriesEnabled={memoriesEnabled}
@@ -158,7 +156,7 @@ export function FeeliftTeamsApp({ isVisible, onOpenMobileApp }: FeeliftTeamsAppP
           </span>
           <div style={{ width: 1, height: 14, background: "rgba(168,200,240,0.6)" }} />
           <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#5a6a8a" }}>
-            <Shield size={13} color="#4ade80" /> Responses aggregated anonymously
+            <Lock size={13} color="#4ade80" /> Private to you
           </span>
         </div>
         <span style={{ fontSize: 11, color: "#5a6a8a" }}>Last check-in: Yesterday</span>
@@ -285,16 +283,9 @@ function ChatView({
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [typing, setTyping] = useState(false)
-  const [seconds, setSeconds] = useState(0)
   const [memoryHandled, setMemoryHandled] = useState(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const idRef = useRef(1)
-
-  // Start timer
-  useEffect(() => {
-    const iv = setInterval(() => setSeconds(s => Math.min(s + 1, SESSION_LIMIT)), 1000)
-    return () => clearInterval(iv)
-  }, [])
 
   // Seed the opening message
   useEffect(() => {
@@ -303,21 +294,22 @@ function ChatView({
       sender: "ai",
       step: 0,
       text:
-        "Hello! I'm here to support you today. This is a safe space to share what's on your mind. What would you like to talk about?",
+        "Hello! I'm here to support you today. This is a safe space to share what's on your mind. How are you feeling right now?",
     }
     const first: ChatMessage[] = [opener]
 
     if (hasPastMemory && memoriesEnabled) {
+      // Add a memory-aware follow-up, per the brief.
       first.push({
         id: idRef.current++,
         sender: "ai",
         step: 0,
         text:
-          "Last week you mentioned feeling uncertain about the Q3 restructuring announcement. Would you like to revisit that, or start fresh today?",
+          "Last time we spoke you mentioned feeling uncertain about the Q3 restructuring announcement. Would you like to revisit that, or start fresh today?",
         replies: ["Revisit that topic", "Start fresh today"],
       })
     } else {
-      first[0].replies = ["Work is stressful", "Feeling good", "Not sure"]
+      opener.replies = ["Good", "OK", "Not well"]
     }
     setMessages(first)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -374,10 +366,10 @@ function ChatView({
         )
         return
       }
-      if (lower.includes("fresh") || lower.includes("new") || lower.includes("something new")) {
+      if (lower.includes("fresh") || lower.includes("new") || lower.includes("start")) {
         pushAi(
-          "Of course — we'll leave that for another time. How are you feeling about work today?",
-          { step: 0, replies: ["Stressed", "OK, just tired", "Actually good"] }
+          "Of course — we'll leave that for another time. How are you feeling today?",
+          { step: 0, replies: ["Good", "OK", "Not well"] }
         )
         return
       }
@@ -388,16 +380,16 @@ function ChatView({
     if (step === 0) {
       // Check-in → Reflect
       pushAi(
-        "Thanks for sharing that. What's contributing to how you're feeling — is there a recent change or pressure behind it?",
-        { step: 1, replies: ["Workload", "Leadership clarity", "Team dynamics"] }
+        "Thanks for sharing that. What's contributing to how you're feeling — is there something on your mind?",
+        { step: 1, replies: ["Workload", "Change at work", "Life outside work"] }
       )
       return
     }
 
     if (step === 1) {
-      // Reflect → Suggest (include a company-context nudge, per the brief)
+      // Reflect → Suggest (gentle, no aggregation language)
       pushAi(
-        "That makes sense, and I appreciate you naming it. A lot of folks on your team have been sitting with similar feelings this week.",
+        "That makes sense, and I appreciate you naming it.",
         { delay: 600 }
       )
       setTimeout(() => {
@@ -413,19 +405,19 @@ function ChatView({
       // Suggest → Wrap-up (route to Support if they say "overwhelmed")
       if (lower.includes("overwhelmed") || lower.includes("struggl") || lower.includes("crisis")) {
         pushAi(
-          "I hear you — that's a lot to carry. I'd like to point you to a few private resources outside of this check-in.",
+          "I hear you — that's a lot to carry. Let me point you to a few resources you can reach anytime.",
           { delay: 500 }
         )
         setTimeout(() => {
           pushAi(
-            "You can open the Support tab anytime for a confidential line or professional help. None of this is shared with your employer.",
+            "You can open the Support tab for a confidential crisis line, a therapist, a 60-second breathing reset, or short reads.",
             { step: 3, delay: 1100, replies: ["Open Support", "Finish check-in"] }
           )
         }, 900)
         return
       }
       pushAi(
-        "Great. Here's a suggestion you can try right now: 4 slow breaths — in for 4, out for 6. It takes under a minute and can soften the edges of a tough moment.",
+        "Great. Here's something you can try right now: 4 slow breaths — in for 4, out for 6. It takes under a minute and can soften the edges of a tough moment.",
         { delay: 600 }
       )
       setTimeout(() => {
@@ -445,44 +437,28 @@ function ChatView({
         return
       }
       pushAi(
-        "Thank you for checking in today. Your response is combined anonymously with others and only used to help leadership make better decisions — nothing is tied back to you. See you next week.",
+        "Thank you for checking in today. See you next time.",
         { delay: 700 }
       )
     }
   }
 
-  const sessionLabel = `${formatTime(seconds)} / ${formatTime(SESSION_LIMIT)}`
-  const sessionPct = Math.min(100, (seconds / SESSION_LIMIT) * 100)
-
   return (
     <div style={{ width: "100%", height: "100%", padding: "12px 16px", display: "flex", justifyContent: "center", boxSizing: "border-box" }}>
       <Panel style={{ height: "100%" }}>
-        {/* Progress / session row */}
-        <div style={{ padding: "10px 14px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+        {/* Steps row */}
+        <div style={{ padding: "12px 14px 0", display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#5a6a8a", fontVariantNumeric: "tabular-nums" }}>
               <Sparkles size={12} color="#e87040" />
-              <span style={{ fontWeight: 600, color: "#2d3a5c" }}>{sessionLabel}</span>
-              <span style={{ opacity: 0.7 }}>session</span>
+              <span style={{ fontWeight: 600, color: "#2d3a5c" }}>Check-in</span>
+              <span style={{ opacity: 0.7 }}>Step {step + 1} of 4</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 20, background: "rgba(74,222,128,0.12)", fontSize: 10, fontWeight: 600, color: "#22c55e" }}>
               <Lock size={9} /> Anonymous
             </div>
           </div>
 
-          {/* Session progress */}
-          <div style={{ height: 2, background: "rgba(168,200,240,0.25)", borderRadius: 2, overflow: "hidden" }}>
-            <div
-              style={{
-                height: "100%",
-                width: `${sessionPct}%`,
-                background: "linear-gradient(90deg,#a8c8f0,#f5b87a,#e87040)",
-                transition: "width 0.4s linear",
-              }}
-            />
-          </div>
-
-          {/* Steps */}
           <StepsRow step={step} />
         </div>
 
@@ -778,176 +754,722 @@ function TypingIndicator() {
   )
 }
 
-function formatTime(total: number) {
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, "0")}`
-}
-
 // ─── SUPPORT VIEW ─────────────────────────────────────────────────────────────
 
-function SupportView({ onOpenMobileApp }: { onOpenMobileApp: () => void }) {
-  const items = [
+function SupportView() {
+  const [page, setPage] = useState<SupportPageId>("list")
+
+  const items: {
+    id: SupportPageId
+    Icon: typeof Phone
+    label: string
+    sub: string
+    grad: [string, string]
+    glow: string
+  }[] = [
     {
       id: "crisis",
       Icon: Phone,
       label: "Crisis line",
       sub: "24/7 confidential, free — call or text 988",
-      grad: ["#fca5a5", "#f87171"] as [string, string],
+      grad: ["#fca5a5", "#f87171"],
       glow: "#f8717140",
-      onClick: () => {},
     },
     {
       id: "therapist",
       Icon: Heart,
       label: "Talk to a therapist",
       sub: "Book a session with a certified professional",
-      grad: ["#c4b5fd", "#8b5cf6"] as [string, string],
+      grad: ["#c4b5fd", "#8b5cf6"],
       glow: "#8b5cf640",
-      onClick: () => {},
     },
     {
       id: "breathing",
       Icon: Wind,
       label: "60-second breathing reset",
       sub: "Guided inhale / exhale to soften a hard moment",
-      grad: ["#a8c8f0", "#60a5fa"] as [string, string],
+      grad: ["#a8c8f0", "#60a5fa"],
       glow: "#60a5fa40",
-      onClick: () => {},
     },
     {
       id: "articles",
       Icon: BookOpen,
       label: "Self-guided resources",
       sub: "Short reads on workload, clarity, and change",
-      grad: ["#fde68a", "#f5b87a"] as [string, string],
+      grad: ["#fde68a", "#f5b87a"],
       glow: "#f5b87a40",
-      onClick: () => {},
     },
   ]
 
   return (
-    <div style={{ width: "100%", height: "100%", padding: "12px 16px", display: "flex", justifyContent: "center", boxSizing: "border-box" }}>
-      <Panel>
-        <div style={{ padding: "16px 18px 6px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                background: "linear-gradient(135deg,rgba(245,184,122,0.3),rgba(232,112,64,0.25))",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 4px 14px rgba(232,112,64,0.18)",
-              }}
-            >
-              <LifeBuoy size={18} color="#e87040" />
+    <div
+      className="fl-scroll"
+      style={{
+        width: "100%",
+        height: "100%",
+        padding: "12px 16px",
+        display: "flex",
+        justifyContent: "center",
+        boxSizing: "border-box",
+        overflowY: "auto",
+      }}
+    >
+      <Panel style={{ height: "fit-content" }}>
+        {page === "list" ? (
+          <>
+            <div style={{ padding: "16px 18px 6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    background: "linear-gradient(135deg,rgba(245,184,122,0.3),rgba(232,112,64,0.25))",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 14px rgba(232,112,64,0.18)",
+                  }}
+                >
+                  <LifeBuoy size={18} color="#e87040" />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#2d3a5c" }}>We&apos;re here for you</p>
+                  <p style={{ margin: 0, fontSize: 12, color: "#5a6a8a" }}>Confidential support, always available</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#2d3a5c" }}>We&apos;re here for you</p>
-              <p style={{ margin: 0, fontSize: 12, color: "#5a6a8a" }}>Confidential, independent of your workplace</p>
-            </div>
-          </div>
 
-          {/* Private-app banner */}
-          <button
-            onClick={onOpenMobileApp}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "10px 14px",
-              borderRadius: 16,
-              border: "0.5px solid rgba(168,200,240,0.3)",
-              cursor: "pointer",
-              marginBottom: 14,
-              background: "linear-gradient(135deg,rgba(168,200,240,0.18),rgba(245,184,122,0.12))",
-              boxShadow: "0 2px 10px rgba(168,200,240,0.16)",
-            }}
-          >
-            <div style={{ width: 40, height: 40, borderRadius: 12, overflow: "hidden", flexShrink: 0, boxShadow: "0 2px 8px rgba(232,112,64,0.2)" }}>
-              <img src="/logo-my-1.png" alt="FeelLift private app" width={40} height={40} style={{ display: "block" }} />
-            </div>
-            <div style={{ flex: 1, textAlign: "left" }}>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#2d3a5c" }}>Open private FeelLift app</p>
-              <p style={{ margin: "2px 0 0", fontSize: 11, color: "#5a6a8a" }}>Completely separate from your workplace</p>
-            </div>
-            <ChevronRight size={15} color="#5a6a8a" />
-          </button>
+            <div style={{ padding: "6px 18px 18px", display: "flex", flexDirection: "column", gap: 8 }}>
+              {items.map((r, i) => (
+                <button
+                  key={r.id}
+                  onClick={() => setPage(r.id)}
+                  className="anim-up"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "11px 14px",
+                    borderRadius: 14,
+                    border: "0.5px solid rgba(168,200,240,0.25)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    background: "rgba(255,248,240,0.85)",
+                    boxShadow: "0 1px 6px rgba(168,200,240,0.12)",
+                    animationDelay: `${0.05 + i * 0.05}s`,
+                    transition: "transform 0.18s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateX(2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateX(0)")}
+                >
+                  <div
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      background: `linear-gradient(135deg,${r.grad[0]},${r.grad[1]})`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: `0 4px 12px ${r.glow}`,
+                    }}
+                  >
+                    <r.Icon size={16} color="white" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#2d3a5c" }}>{r.label}</p>
+                    <p style={{ margin: "1px 0 0", fontSize: 11, color: "#5a6a8a" }}>{r.sub}</p>
+                  </div>
+                  <ChevronRight size={14} color="#c0cce0" />
+                </button>
+              ))}
 
-          <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#5a6a8a" }}>
-            Immediate help
-          </p>
-        </div>
-
-        <div style={{ padding: "0 18px 18px", display: "flex", flexDirection: "column", gap: 8 }}>
-          {items.map((r, i) => (
-            <button
-              key={r.id}
-              onClick={r.onClick}
-              className="anim-up"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "11px 14px",
-                borderRadius: 14,
-                border: "0.5px solid rgba(168,200,240,0.25)",
-                cursor: "pointer",
-                textAlign: "left",
-                background: "rgba(255,248,240,0.85)",
-                boxShadow: "0 1px 6px rgba(168,200,240,0.12)",
-                animationDelay: `${0.05 + i * 0.05}s`,
-                transition: "transform 0.18s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "translateX(2px)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "translateX(0)")}
-            >
               <div
                 style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: "50%",
-                  flexShrink: 0,
-                  background: `linear-gradient(135deg,${r.grad[0]},${r.grad[1]})`,
+                  marginTop: 4,
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: `0 4px 12px ${r.glow}`,
+                  alignItems: "flex-start",
+                  gap: 8,
+                  padding: "9px 12px",
+                  borderRadius: 12,
+                  background: "rgba(248,113,113,0.08)",
+                  border: "0.5px solid rgba(248,113,113,0.25)",
                 }}
               >
-                <r.Icon size={16} color="white" />
+                <AlertTriangle size={13} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
+                <p style={{ margin: 0, fontSize: 11, color: "#7a3a3a", lineHeight: 1.45 }}>
+                  If you&apos;re in immediate danger, call your local emergency number. This is not a substitute for professional care.
+                </p>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#2d3a5c" }}>{r.label}</p>
-                <p style={{ margin: "1px 0 0", fontSize: 11, color: "#5a6a8a" }}>{r.sub}</p>
-              </div>
-              <ChevronRight size={14} color="#c0cce0" />
-            </button>
-          ))}
+            </div>
+          </>
+        ) : (
+          <SupportDetail page={page} onBack={() => setPage("list")} />
+        )}
+      </Panel>
+    </div>
+  )
+}
 
-          <div
+function SupportDetail({ page, onBack }: { page: Exclude<SupportPageId, "list">; onBack: () => void }) {
+  return (
+    <div style={{ padding: "12px 16px 18px" }}>
+      <button
+        onClick={onBack}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          padding: "5px 10px 5px 6px",
+          borderRadius: 999,
+          border: "0.5px solid rgba(168,200,240,0.35)",
+          background: "rgba(255,255,255,0.9)",
+          color: "#5a6a8a",
+          fontSize: 11,
+          fontWeight: 600,
+          cursor: "pointer",
+          marginBottom: 12,
+        }}
+      >
+        <ChevronLeft size={13} /> Back
+      </button>
+
+      {page === "crisis" && <CrisisPage />}
+      {page === "therapist" && <TherapistPage />}
+      {page === "breathing" && <BreathingPage />}
+      {page === "articles" && <ArticlesPage />}
+    </div>
+  )
+}
+
+function DetailHeader({
+  Icon,
+  title,
+  subtitle,
+  grad,
+  glow,
+}: {
+  Icon: typeof Phone
+  title: string
+  subtitle: string
+  grad: [string, string]
+  glow: string
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 14,
+          background: `linear-gradient(135deg,${grad[0]},${grad[1]})`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: `0 6px 16px ${glow}`,
+          flexShrink: 0,
+        }}
+      >
+        <Icon size={20} color="white" />
+      </div>
+      <div>
+        <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#2d3a5c" }}>{title}</p>
+        <p style={{ margin: 0, fontSize: 12, color: "#5a6a8a" }}>{subtitle}</p>
+      </div>
+    </div>
+  )
+}
+
+function CrisisPage() {
+  return (
+    <div>
+      <DetailHeader
+        Icon={Phone}
+        title="Crisis line"
+        subtitle="24/7 confidential, free"
+        grad={["#fca5a5", "#f87171"]}
+        glow="#f8717140"
+      />
+
+      <div
+        style={{
+          padding: "14px 14px",
+          borderRadius: 14,
+          background: "linear-gradient(135deg,rgba(252,165,165,0.14),rgba(248,113,113,0.08))",
+          border: "0.5px solid rgba(248,113,113,0.3)",
+          fontSize: 12.5,
+          color: "#5a2a2a",
+          lineHeight: 1.55,
+          marginBottom: 14,
+        }}
+      >
+        You can reach the <strong>988 Suicide &amp; Crisis Lifeline</strong> any time, day or night. Trained counselors listen, support, and connect you to local help.
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+        <a
+          href="tel:988"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "12px 14px",
+            borderRadius: 12,
+            textDecoration: "none",
+            background: "linear-gradient(135deg,#f87171,#ef4444)",
+            color: "white",
+            fontWeight: 700,
+            fontSize: 14,
+            boxShadow: "0 6px 18px rgba(239,68,68,0.3)",
+          }}
+        >
+          <Phone size={15} /> Call 988
+        </a>
+        <a
+          href="sms:988"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "12px 14px",
+            borderRadius: 12,
+            textDecoration: "none",
+            background: "white",
+            color: "#ef4444",
+            fontWeight: 700,
+            fontSize: 14,
+            border: "0.5px solid rgba(248,113,113,0.5)",
+          }}
+        >
+          <MessageSquareText size={15} /> Text 988
+        </a>
+      </div>
+
+      <div style={{ fontSize: 11, color: "#7a3a3a", lineHeight: 1.5 }}>
+        If you&apos;re in immediate danger, call your local emergency number (911 in the U.S.).
+      </div>
+    </div>
+  )
+}
+
+function TherapistPage() {
+  const [slot, setSlot] = useState<string | null>(null)
+  const [note, setNote] = useState("")
+  const [sent, setSent] = useState(false)
+
+  const slots = [
+    { id: "today-4", label: "Today", time: "4:00 PM" },
+    { id: "today-6", label: "Today", time: "6:30 PM" },
+    { id: "tomorrow-10", label: "Tomorrow", time: "10:00 AM" },
+    { id: "tomorrow-2", label: "Tomorrow", time: "2:00 PM" },
+  ]
+
+  if (sent) {
+    return (
+      <div>
+        <DetailHeader
+          Icon={Heart}
+          title="Request sent"
+          subtitle="A therapist will reach out privately"
+          grad={["#c4b5fd", "#8b5cf6"]}
+          glow="#8b5cf640"
+        />
+        <div
+          style={{
+            padding: "14px",
+            borderRadius: 14,
+            background: "linear-gradient(135deg,rgba(196,181,253,0.18),rgba(139,92,246,0.08))",
+            border: "0.5px solid rgba(139,92,246,0.3)",
+            fontSize: 12.5,
+            color: "#2d3a5c",
+            lineHeight: 1.55,
+          }}
+        >
+          Thanks for taking this step. You&apos;ll get a confidential message within 24 hours to confirm your session.
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <DetailHeader
+        Icon={Heart}
+        title="Talk to a therapist"
+        subtitle="Book a session with a certified professional"
+        grad={["#c4b5fd", "#8b5cf6"]}
+        glow="#8b5cf640"
+      />
+
+      <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#5a6a8a" }}>
+        Choose a time
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 14 }}>
+        {slots.map(s => {
+          const active = slot === s.id
+          return (
+            <button
+              key={s.id}
+              onClick={() => setSlot(s.id)}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 12,
+                border: active ? "0.5px solid transparent" : "0.5px solid rgba(168,200,240,0.35)",
+                background: active
+                  ? "linear-gradient(135deg,#c4b5fd,#8b5cf6)"
+                  : "rgba(255,255,255,0.9)",
+                color: active ? "white" : "#2d3a5c",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.18s",
+                boxShadow: active ? "0 4px 14px rgba(139,92,246,0.25)" : "none",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 600, opacity: active ? 0.9 : 0.7 }}>
+                <Calendar size={10} /> {s.label}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 700, marginTop: 2 }}>
+                <Clock size={11} /> {s.time}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#5a6a8a" }}>
+        What&apos;s on your mind (optional)
+      </p>
+      <textarea
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        placeholder="A sentence or two helps your therapist prepare…"
+        rows={3}
+        style={{
+          width: "100%",
+          padding: "10px 12px",
+          borderRadius: 12,
+          border: "0.5px solid rgba(168,200,240,0.4)",
+          background: "white",
+          fontSize: 12.5,
+          color: "#2d3a5c",
+          outline: "none",
+          resize: "none",
+          fontFamily: "inherit",
+          marginBottom: 12,
+          boxSizing: "border-box",
+        }}
+      />
+
+      <button
+        onClick={() => slot && setSent(true)}
+        disabled={!slot}
+        style={{
+          width: "100%",
+          padding: "12px",
+          borderRadius: 12,
+          border: "none",
+          background: slot
+            ? "linear-gradient(135deg,#c4b5fd,#8b5cf6)"
+            : "rgba(168,200,240,0.3)",
+          color: "white",
+          fontWeight: 700,
+          fontSize: 13,
+          cursor: slot ? "pointer" : "default",
+          boxShadow: slot ? "0 6px 18px rgba(139,92,246,0.28)" : "none",
+          transition: "all 0.18s",
+        }}
+      >
+        Request session
+      </button>
+
+      <p style={{ margin: "10px 0 0", fontSize: 10, color: "#8a9ab8", lineHeight: 1.45, textAlign: "center" }}>
+        Confidential. Nothing you share here will ever be tied back to you.
+      </p>
+    </div>
+  )
+}
+
+function BreathingPage() {
+  const TOTAL = 60 // seconds
+  const [running, setRunning] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
+  const rafRef = useRef<number | null>(null)
+  const startRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!running) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      return
+    }
+    startRef.current = performance.now() - elapsed * 1000
+    const tick = (t: number) => {
+      const e = (t - (startRef.current ?? t)) / 1000
+      if (e >= TOTAL) {
+        setElapsed(TOTAL)
+        setRunning(false)
+        return
+      }
+      setElapsed(e)
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running])
+
+  // 4s in, 2s hold, 6s out
+  const CYCLE = 12
+  const t = elapsed % CYCLE
+  let phase: "Breathe in" | "Hold" | "Breathe out"
+  let scale: number
+  if (t < 4) {
+    phase = "Breathe in"
+    scale = 0.78 + (t / 4) * 0.4
+  } else if (t < 6) {
+    phase = "Hold"
+    scale = 1.18
+  } else {
+    phase = "Breathe out"
+    scale = 1.18 - ((t - 6) / 6) * 0.4
+  }
+
+  const remaining = Math.max(0, TOTAL - Math.floor(elapsed))
+  const mm = Math.floor(remaining / 60)
+  const ss = (remaining % 60).toString().padStart(2, "0")
+
+  const reset = () => { setRunning(false); setElapsed(0) }
+
+  return (
+    <div>
+      <DetailHeader
+        Icon={Wind}
+        title="60-second breathing reset"
+        subtitle="Inhale 4 · Hold 2 · Exhale 6"
+        grad={["#a8c8f0", "#60a5fa"]}
+        glow="#60a5fa40"
+      />
+
+      <div
+        style={{
+          height: 210,
+          borderRadius: 16,
+          background: "linear-gradient(180deg,rgba(168,200,240,0.16),rgba(96,165,250,0.06))",
+          border: "0.5px solid rgba(168,200,240,0.3)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 14,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            width: 120,
+            height: 120,
+            borderRadius: "50%",
+            background: "radial-gradient(circle at 35% 30%,rgba(255,255,255,0.8),rgba(168,200,240,0.6) 45%,rgba(96,165,250,0.5) 80%)",
+            transform: `scale(${scale})`,
+            transition: running ? "transform 0.1s linear" : "transform 0.4s ease",
+            boxShadow: "0 0 40px rgba(96,165,250,0.4), 0 10px 30px rgba(96,165,250,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontWeight: 700,
+            fontSize: 13,
+            letterSpacing: "0.04em",
+          }}
+        >
+          {running || elapsed > 0 ? phase : "Ready"}
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 8,
+            right: 12,
+            fontSize: 11,
+            color: "#5a6a8a",
+            fontVariantNumeric: "tabular-nums",
+            fontWeight: 600,
+          }}
+        >
+          {mm}:{ss}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          onClick={() => setRunning(r => !r)}
+          disabled={elapsed >= TOTAL}
+          style={{
+            flex: 1,
+            padding: "12px",
+            borderRadius: 12,
+            border: "none",
+            background: elapsed >= TOTAL
+              ? "rgba(168,200,240,0.3)"
+              : "linear-gradient(135deg,#a8c8f0,#60a5fa)",
+            color: "white",
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: elapsed >= TOTAL ? "default" : "pointer",
+            boxShadow: elapsed >= TOTAL ? "none" : "0 6px 18px rgba(96,165,250,0.28)",
+          }}
+        >
+          {elapsed >= TOTAL ? "Done" : running ? "Pause" : elapsed > 0 ? "Resume" : "Start"}
+        </button>
+        <button
+          onClick={reset}
+          style={{
+            padding: "12px 16px",
+            borderRadius: 12,
+            border: "0.5px solid rgba(168,200,240,0.4)",
+            background: "white",
+            color: "#5a6a8a",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          Reset
+        </button>
+      </div>
+
+      <p style={{ margin: "12px 0 0", fontSize: 11, color: "#8a9ab8", lineHeight: 1.45, textAlign: "center" }}>
+        One minute. That&apos;s all this takes.
+      </p>
+    </div>
+  )
+}
+
+function ArticlesPage() {
+  const articles = [
+    {
+      id: "workload",
+      title: "When workload feels heavy",
+      read: "3 min read",
+      category: "Workload",
+      body:
+        "When the to-do list grows faster than you can cross it off, your body signals overload long before you consciously notice. A useful first step is to externalize — list the 3 things that truly matter today, and give yourself permission to let the rest wait. Progress on the right thing beats motion on everything.",
+    },
+    {
+      id: "clarity",
+      title: "Finding clarity during change",
+      read: "4 min read",
+      category: "Change",
+      body:
+        "Uncertainty drains energy because our brains keep simulating every possible outcome. Instead, name what is actually known, what is being decided, and by when. Then choose one thing inside your control — a conversation, a boundary, a small next step — and spend your energy there.",
+    },
+    {
+      id: "reset",
+      title: "Small resets for hard moments",
+      read: "2 min read",
+      category: "Wellbeing",
+      body:
+        "A hard moment doesn't need to be fixed — it needs to be softened. Try 4-6 breathing (inhale 4, exhale 6) for a minute, a glass of water, and naming one thing you can see, hear, and feel. These micro-resets are not small — they interrupt the spiral.",
+    },
+    {
+      id: "manager",
+      title: "How to talk to your manager",
+      read: "3 min read",
+      category: "Communication",
+      body:
+        "Bringing something up doesn't mean asking for it to be fixed. Start with what you're observing (\"my workload has shifted\"), what you're feeling (\"I'm stretched thin\"), and one thing that would help (\"can we reprioritize together?\"). Clarity helps both of you.",
+    },
+  ]
+
+  const [open, setOpen] = useState<string | null>(null)
+  const current = articles.find(a => a.id === open) ?? null
+
+  if (current) {
+    return (
+      <div>
+        <DetailHeader
+          Icon={BookOpen}
+          title={current.title}
+          subtitle={`${current.category} · ${current.read}`}
+          grad={["#fde68a", "#f5b87a"]}
+          glow="#f5b87a40"
+        />
+        <div
+          style={{
+            padding: "14px",
+            borderRadius: 14,
+            background: "rgba(255,248,240,0.95)",
+            border: "0.5px solid rgba(168,200,240,0.25)",
+            fontSize: 12.5,
+            lineHeight: 1.6,
+            color: "#2d3a5c",
+            marginBottom: 10,
+          }}
+        >
+          {current.body}
+        </div>
+        <button
+          onClick={() => setOpen(null)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "6px 12px 6px 8px",
+            borderRadius: 999,
+            border: "0.5px solid rgba(168,200,240,0.35)",
+            background: "white",
+            color: "#5a6a8a",
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          <ChevronLeft size={13} /> All resources
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <DetailHeader
+        Icon={BookOpen}
+        title="Self-guided resources"
+        subtitle="Short reads on workload, clarity, and change"
+        grad={["#fde68a", "#f5b87a"]}
+        glow="#f5b87a40"
+      />
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {articles.map(a => (
+          <button
+            key={a.id}
+            onClick={() => setOpen(a.id)}
             style={{
-              marginTop: 4,
               display: "flex",
-              alignItems: "flex-start",
-              gap: 8,
-              padding: "9px 12px",
-              borderRadius: 12,
-              background: "rgba(248,113,113,0.08)",
-              border: "0.5px solid rgba(248,113,113,0.25)",
+              alignItems: "center",
+              gap: 10,
+              padding: "11px 14px",
+              borderRadius: 14,
+              border: "0.5px solid rgba(168,200,240,0.28)",
+              background: "rgba(255,248,240,0.85)",
+              cursor: "pointer",
+              textAlign: "left",
             }}
           >
-            <AlertTriangle size={13} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
-            <p style={{ margin: 0, fontSize: 11, color: "#7a3a3a", lineHeight: 1.45 }}>
-              If you&apos;re in immediate danger, call your local emergency number. This app is not a substitute for professional care.
-            </p>
-          </div>
-        </div>
-      </Panel>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#2d3a5c" }}>{a.title}</p>
+              <p style={{ margin: "2px 0 0", fontSize: 11, color: "#5a6a8a" }}>
+                {a.category} · {a.read}
+              </p>
+            </div>
+            <ChevronRight size={14} color="#c0cce0" />
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -966,7 +1488,6 @@ function SettingsView({
   onDeleteMemories: () => void
 }) {
   const [notifyWeekly, setNotifyWeekly] = useState(true)
-  const [notifyEvent, setNotifyEvent] = useState(true)
 
   return (
     <div
@@ -991,29 +1512,22 @@ function SettingsView({
           />
           <div
             style={{
-              padding: "11px 13px",
+              padding: "13px 14px",
               borderRadius: 14,
               background: "linear-gradient(135deg,rgba(74,222,128,0.08),rgba(168,200,240,0.06))",
               border: "0.5px solid rgba(74,222,128,0.25)",
-              fontSize: 11.5,
+              fontSize: 12.5,
               color: "#2d3a5c",
               lineHeight: 1.55,
-              marginBottom: 14,
+              marginBottom: 12,
+              fontWeight: 600,
             }}
           >
-            <p style={{ margin: "0 0 6px", fontWeight: 600 }}>
-              Nothing you share here will ever be tied back to you.
-            </p>
-            <p style={{ margin: 0, color: "#5a6a8a" }}>
-              Your responses are combined anonymously with others on your team and only used to help leadership make better decisions.
-              Results are never shown for groups smaller than 5 people, and raw conversations are never accessible to your employer.
-            </p>
+            Nothing you share here will ever be tied back to you.
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
-            <PrivacyBullet Icon={Eye}   text="No individual responses surface to managers or admins" />
-            <PrivacyBullet Icon={Lock}  text="Aggregated data has a 12–24 hour processing delay" />
-            <PrivacyBullet Icon={Shield} text="Team data is withheld if fewer than 5 people respond" />
+            <PrivacyBullet text="No individual responses surface to managers or admins" />
           </div>
 
           {/* Memory section */}
@@ -1078,7 +1592,7 @@ function SettingsView({
 
           {/* Notifications */}
           <SectionHeader
-            icon={<Bell size={14} color="#a8c8f0" />}
+            icon={<Sun size={14} color="#a8c8f0" />}
             title="Notifications"
             subtitle="Low-pressure, never spammy"
           />
@@ -1088,12 +1602,6 @@ function SettingsView({
               description="A 60-second invite, sent once a week"
               checked={notifyWeekly}
               onToggle={() => setNotifyWeekly(v => !v)}
-            />
-            <ToggleRow
-              label="After major company events"
-              description="A short prompt after town halls or announcements"
-              checked={notifyEvent}
-              onToggle={() => setNotifyEvent(v => !v)}
             />
           </div>
         </div>
@@ -1128,7 +1636,7 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
   )
 }
 
-function PrivacyBullet({ Icon, text }: { Icon: typeof Eye; text: string }) {
+function PrivacyBullet({ text }: { text: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <div
@@ -1143,7 +1651,7 @@ function PrivacyBullet({ Icon, text }: { Icon: typeof Eye; text: string }) {
           flexShrink: 0,
         }}
       >
-        <Icon size={11} color="#5a6a8a" />
+        <Check size={11} color="#22c55e" strokeWidth={3} />
       </div>
       <p style={{ margin: 0, fontSize: 11.5, color: "#5a6a8a", lineHeight: 1.4 }}>{text}</p>
     </div>

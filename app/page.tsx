@@ -1,12 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { cn } from "@/lib/utils"
 import {
   Play,
   RotateCcw,
   Sparkles,
-  Smartphone,
   MessageSquare,
   Shield,
   Wind,
@@ -14,11 +12,9 @@ import {
   Zap,
   Heart,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { TeamsSidebar } from "@/components/teams/teams-sidebar"
 import { TeamsHeader } from "@/components/teams/teams-header"
 import { FeeliftTeamsApp } from "@/components/teams/feelift-teams-app"
-import { PhoneAppPreview } from "@/components/teams/phone-app-preview"
 
 const P = {
   skyTop: "#a8c8f0",
@@ -39,7 +35,6 @@ type DemoStep = "intro" | "teams"
 export default function TeamsDemo() {
   const [activeTab, setActiveTab] = useState("chat")
   const [demoStep, setDemoStep] = useState<DemoStep>("intro")
-  const [showPhonePreview, setShowPhonePreview] = useState(false)
   const [showNotification, setShowNotification] = useState(false)
 
   const userInitials = "AP"
@@ -107,12 +102,12 @@ export default function TeamsDemo() {
               >
                   <img
                     src="/logo-my-1.png"
-                    alt="logo"
+                    alt="Aura"
                     width={80}
                     height={80}
                   />              </div>
               <div className="text-left">
-                <p className="text-xl font-serif font-bold" style={{ color: P.textDark }}>FeelLift</p>
+                <p className="text-xl font-serif font-bold" style={{ color: P.textDark }}>Aura</p>
                 <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: P.textMid }}>
                   Employee Wellness
                 </p>
@@ -153,16 +148,16 @@ export default function TeamsDemo() {
             </div>
 
             <p className="text-base leading-relaxed max-w-xl mx-auto" style={{ color: P.textMid }}>
-              A dedicated Teams app for daily wellness. Simple 3-option check-in,
-              immediate breathing exercises, and seamless handoff to private support.
+              A dedicated Teams app for daily wellness. A guided AI check-in,
+              immediate breathing resets, and private support — all in one place.
             </p>
 
             {/* Mood dots */}
             <div className="flex items-center justify-center gap-8 py-2">
               {[
                 { color: P.green, label: "Good" },
-                { color: P.yellow, label: "OK..." },
-                { color: P.red, label: "Not great" },
+                { color: P.yellow, label: "OK" },
+                { color: P.red, label: "Not well" },
               ].map(({ color, label }) => (
                 <div key={label} className="flex flex-col items-center gap-2">
                   <div
@@ -186,19 +181,6 @@ export default function TeamsDemo() {
                 <Play className="w-4 h-4" />
                 Start Demo
               </button>
-              <button
-                className="flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-transform active:scale-95"
-                style={{
-                  background: "rgba(255,255,255,0.45)",
-                  border: `1px solid ${P.cardBorder}`,
-                  color: P.textDark,
-                  backdropFilter: "blur(8px)",
-                }}
-                onClick={() => { window.location.href = "https://app-feellift-1.vercel.app/app";}}
-              >
-                <Smartphone className="w-4 h-4" />
-                View Mobile App
-              </button>
             </div>
           </div>
 
@@ -207,20 +189,20 @@ export default function TeamsDemo() {
             {[
               {
                 icon: <MessageSquare className="w-5 h-5" style={{ color: P.skyTop }} />,
-                title: "Teams native app",
-                desc: "A dedicated wellness app in the Teams sidebar — not buried in chat. One click to check in.",
+                title: "Teams native chat",
+                desc: "A guided AI check-in with steps at the top — Check-in, Reflect, Suggest, Wrap-up. No forms, no friction.",
                 accent: P.skyTop,
               },
               {
                 icon: <Wind className="w-5 h-5" style={{ color: P.peach }} />,
-                title: "Immediate help",
-                desc: "Feeling 'Ehh'? Get an instant guided breathing exercise right in Teams before your day continues.",
+                title: "Support when you need it",
+                desc: "A 60-second breathing reset, a crisis line, a therapist, and short reads — always one tap away.",
                 accent: P.peach,
               },
               {
                 icon: <Shield className="w-5 h-5" style={{ color: P.orange }} />,
-                title: "Private when needed",
-                desc: "Struggling? Seamlessly transition to the private mobile app — completely separate from enterprise.",
+                title: "Private to you",
+                desc: "Anonymous and confidential. Nothing you share will ever be tied back to you.",
                 accent: P.orange,
               },
             ].map(({ icon, title, desc, accent }) => (
@@ -249,8 +231,6 @@ export default function TeamsDemo() {
             ))}
           </div>
         </div>
-
-        {showPhonePreview && <PhoneModal onClose={() => setShowPhonePreview(false)} />}
       </div>
     )
   }
@@ -273,19 +253,11 @@ export default function TeamsDemo() {
           <div className="h-4 w-px" style={{ background: P.cardBorder }} />
           <p className="text-xs" style={{ color: P.textMid }}>
             {showNotification
-              ? "Click the FeelLift app in the sidebar to start your check-in"
-              : "Watch for the notification on the FeelLift app..."}
+              ? "Click the Aura app in the sidebar to start your check-in"
+              : "Watch for the notification on the Aura app..."}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
-            style={{ background: "rgba(255,255,255,0.5)", border: `1px solid ${P.cardBorder}`, color: P.textDark }}
-            onClick={() => setShowPhonePreview(true)}
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            Mobile App
-          </button>
           <button
             className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
             style={{ background: "rgba(255,255,255,0.5)", border: `1px solid ${P.cardBorder}`, color: P.textDark }}
@@ -306,7 +278,7 @@ export default function TeamsDemo() {
           hasNotification={showNotification}
         />
         {activeTab === "feelift" ? (
-          <FeeliftTeamsApp isVisible={true} onOpenMobileApp={() => setShowPhonePreview(true)} />
+          <FeeliftTeamsApp isVisible={true} />
         ) : (
           <DefaultTeamsContent
             activeTab={activeTab}
@@ -315,8 +287,6 @@ export default function TeamsDemo() {
           />
         )}
       </div>
-
-      {showPhonePreview && <PhoneModal onClose={() => setShowPhonePreview(false)} />}
     </div>
   )
 }
@@ -358,7 +328,7 @@ function DefaultTeamsContent({
               >
                   <img
                     src="/logo-my-1.png"
-                    alt="logo"
+                    alt="Aura"
                     width={80}
                     height={80}
                   />              </div>              </div>
@@ -367,7 +337,7 @@ function DefaultTeamsContent({
                   You have a new check-in!
                 </h3>
                 <p className="text-sm mt-2" style={{ color: P.textMid }}>
-                  Click the FeelLift app in the sidebar to start your daily wellness check-in.
+                  Click the Aura app in the sidebar to start your daily wellness check-in.
                 </p>
               </div>
               <button
@@ -375,7 +345,7 @@ function DefaultTeamsContent({
                 style={{ background: P.orange }}
                 onClick={onGoToFeelit}
               >
-                Open FeelLift <ArrowRight className="w-4 h-4" />
+                Open Aura <ArrowRight className="w-4 h-4" />
               </button>
             </>
           ) : (
@@ -396,7 +366,7 @@ function DefaultTeamsContent({
                   {tabNames[activeTab]}
                 </h3>
                 <p className="text-sm mt-1" style={{ color: P.textMid }}>
-                  This is a demo. Watch for the FeelLift notification...
+                  This is a demo. Watch for the Aura notification...
                 </p>
               </div>
               <div className="flex items-center justify-center gap-2">
@@ -410,37 +380,6 @@ function DefaultTeamsContent({
               </div>
             </>
           )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function PhoneModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50 p-4"
-      style={{ background: "rgba(45,58,92,0.4)", backdropFilter: "blur(12px)" }}
-      onClick={onClose}
-    >
-      <div
-        className="rounded-[32px] max-w-md w-full max-h-[90vh] overflow-auto"
-        style={{ background: "#fdf0e0", border: "1px solid rgba(255,255,255,0.6)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <PhoneAppPreview />
-        <div className="p-4" style={{ borderTop: "1px solid rgba(168,200,240,0.3)" }}>
-          <button
-            className="w-full py-3 rounded-full font-bold text-sm uppercase tracking-widest"
-            style={{
-              background: "rgba(255,255,255,0.6)",
-              border: "1px solid rgba(168,200,240,0.4)",
-              color: P.textDark,
-            }}
-            onClick={onClose}
-          >
-            Close Preview
-          </button>
         </div>
       </div>
     </div>

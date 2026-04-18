@@ -113,12 +113,12 @@ export function TeamsSidebar({ activeTab, onTabChange, hasNotification }: TeamsS
               >
                   <img
                     src="/logo-my-1.png"
-                    alt="logo"
+                    alt="Aura"
                     width={80}
                     height={80}
                   />              </div>
           </div>
-          <span className="text-[10px] font-medium">FeelLift</span>
+          <span className="text-[10px] font-medium">Aura</span>
         </button>
       </nav>
 
