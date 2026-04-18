@@ -32,6 +32,95 @@ interface AuraTeamsAppProps {
 
 const STEP_LABELS = ["Check-in", "Reflect", "Suggest", "Wrap-up"] as const
 
+// ── Psychologist-informed micro-copy helpers ───────────────────────────────
+// Each helper returns a short line tuned to what the user just disclosed.
+// Tone: warm, specific, non-performative; never "I understand", always
+// "That makes sense" / "That tracks". Reflections mirror before moving.
+
+function parseArea(lower: string): "work" | "life" | "both" | "not-sure" {
+  if (/both/.test(lower)) return "both"
+  if (/life|home|family|personal|outside/.test(lower)) return "life"
+  if (/work|job|team|manager|boss|career|office/.test(lower)) return "work"
+  return "not-sure"
+}
+
+function areaReflect(area: "work" | "life" | "both" | "not-sure"): string {
+  switch (area) {
+    case "work": return "Work stuff can be especially sticky because it follows us home. Thanks for saying."
+    case "life": return "Life outside work asks a lot — even when nothing is technically wrong, it can still wear you down."
+    case "both": return "That combination is heavy. When both sides are asking for something, it's hard to find a place to land."
+    case "not-sure": return "That's okay. Sometimes it's just a cloudy day, not a clear reason."
+  }
+}
+
+// Maps a user reply (quick-reply label or free-text) to a single feeling word.
+function parseFeeling(lower: string, original: string): string {
+  if (/overwhelm/.test(lower)) return "Overwhelmed"
+  if (/anx|nerv|worr|panic/.test(lower)) return "Anxious"
+  if (/frustr|angry|mad|irrit/.test(lower)) return "Frustrated"
+  if (/stuck|blocked|paralyz/.test(lower)) return "Stuck"
+  if (/sad|down|cry|tear/.test(lower)) return "Sad"
+  if (/flat|numb|empty|nothing/.test(lower)) return "Flat"
+  if (/tired|exhaust|drain|burn/.test(lower)) return "Tired"
+  if (/calm|peace|steady|settl/.test(lower)) return "Calm"
+  if (/focus|clear|sharp/.test(lower)) return "Focused"
+  if (/content|satisf|grateful/.test(lower)) return "Content"
+  // Fall back to the first word the user offered, capitalized.
+  const first = original.trim().split(/\s+/)[0] || "Something"
+  return first[0]?.toUpperCase() + first.slice(1).toLowerCase()
+}
+
+// Short validation per feeling — normalizes, doesn't pathologize.
+function feelingValidate(feeling: string): string {
+  const f = feeling.toLowerCase()
+  if (f.startsWith("overwhelm"))
+    return "Overwhelm usually shows up when more is coming in than you can process. That's a human response, not a weakness."
+  if (f.startsWith("anx"))
+    return "Anxiety is often your system working overtime to protect you. It isn't who you are — and it doesn't get the final word."
+  if (f.startsWith("frustr"))
+    return "Frustration usually means something matters to you and feels outside your control. That tracks."
+  if (f.startsWith("stuck"))
+    return "Stuck can feel like failure, but it's often just your mind asking for a different angle."
+  if (f.startsWith("sad"))
+    return "Sadness deserves room. It doesn't always mean something is wrong with you — sometimes it's just passing through."
+  if (f.startsWith("flat"))
+    return "Flat is real too. Not every day has to be lit up to be a valid one."
+  if (f.startsWith("tired"))
+    return "Tired is information — your body and mind asking for something. That's worth listening to."
+  if (f.startsWith("calm") || f.startsWith("content") || f.startsWith("focus"))
+    return "Nice. Noticing the good ones makes them stick a little longer."
+  return `That's a real word for it. Thank you for naming it — noticing is already doing something.`
+}
+
+function parseIntensity(lower: string): number | null {
+  // Range buckets as fallback
+  if (/low|1\s*[–-]\s*3|barely/.test(lower)) return 2
+  if (/medium|mid|4\s*[–-]\s*6/.test(lower)) return 5
+  if (/high|7\s*[–-]\s*9/.test(lower)) return 8
+  if (/peak|10/.test(lower)) return 10
+  const m = lower.match(/\b([1-9]|10)\b/)
+  if (m) return parseInt(m[1], 10)
+  return null
+}
+
+function scaleAck(n: number): string {
+  if (n <= 3) return `${n}/10 is useful — there's something there, even if it's quiet. Good to name it before it grows.`
+  if (n <= 6) return `${n}/10 is real. You don't have to fix it to deserve a break. Naming it is already doing work.`
+  if (n <= 9) return `${n}/10 is a lot to be carrying. You're not being dramatic — that's a real load.`
+  return `${n}/10 is heavy. Thank you for trusting me with how big it is.`
+}
+
+function heardDeep(c: { feeling: string | null; area: "work" | "life" | "both" | "not-sure" | null; intensity: number | null }): string {
+  const pieces: string[] = []
+  if (c.area === "work") pieces.push("work has been the hard part")
+  else if (c.area === "life") pieces.push("life outside work is the weight")
+  else if (c.area === "both") pieces.push("both sides are pulling")
+  if (c.feeling) pieces.push(`the word that fit was "${c.feeling.toLowerCase()}"`)
+  if (c.intensity !== null) pieces.push(`and you put it around ${c.intensity}/10`)
+  if (pieces.length === 0) return "Okay — I'm just here. No agenda."
+  return `Okay — just sitting with it: ${pieces.join(", ")}. That's real, and you don't have to talk it into being smaller.`
+}
+
 const CSS = `
   @keyframes fl-breathe   { 0%,100%{transform:scale(1)}                         50%{transform:scale(1.08)} }
   @keyframes fl-fade-in   { from{opacity:0;transform:translateY(8px)}           to{opacity:1;transform:none} }
@@ -268,6 +357,49 @@ function Panel({
 
 // ─── CHAT VIEW ────────────────────────────────────────────────────────────────
 
+// Distress detection — any of these phrases trigger the safety branch.
+// Kept deliberately conservative; false-positives are acceptable here.
+const DISTRESS_PATTERNS: RegExp[] = [
+  /\b(kill|hurt|harm)\s+(myself|me)\b/i,
+  /\b(suicid\w*|suicidal)\b/i,
+  /\b(end\s+it\s+all|end\s+my\s+life)\b/i,
+  /\bcan(?:'|)t\s+(go\s+on|do\s+this\s+anymore|take\s+(?:it|this)\s+anymore|keep\s+going)\b/i,
+  /\bno\s+(point|reason)\s+(in|to|anymore)\b/i,
+  /\b(give\s+up|giving\s+up)\b/i,
+  /\b(hopeless|worthless)\b/i,
+  /\b(want\s+to\s+die)\b/i,
+]
+const isDistress = (text: string) => DISTRESS_PATTERNS.some(rx => rx.test(text))
+
+// Conversation state — collected as the user moves through stages.
+type Mood = "good" | "ok" | "not-well"
+type Area = "work" | "life" | "both" | "not-sure"
+type ConvoState = {
+  mood: Mood | null
+  area: Area | null
+  feeling: string | null
+  intensity: number | null
+  choice: "breathing" | "reframe" | "boundary" | "therapist" | null
+  takeaway: string | null
+}
+const INITIAL_STATE: ConvoState = {
+  mood: null, area: null, feeling: null, intensity: null, choice: null, takeaway: null,
+}
+
+// Each node is a step in the scripted flow. Free text routes through
+// lightweight keyword matching into the closest node.
+type NodeId =
+  | "memory-prompt" | "opener"
+  | "mood-good-area" | "mood-ok-choice" | "mood-notwell-area"
+  | "area-bridge"
+  | "feeling-picker" | "feeling-validate" | "scale" | "scale-ack"
+  | "permission" | "heard-deep" | "options"
+  | "breathing-suggest" | "reframe-ask" | "boundary-ask" | "therapist-suggest"
+  | "takeaway-ack"
+  | "summary" | "memory-save" | "close"
+  | "distress-1" | "distress-options" | "distress-stay"
+  | "good-wrap"
+
 function ChatView({
   memoriesEnabled,
   hasPastMemory,
@@ -283,33 +415,40 @@ function ChatView({
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [typing, setTyping] = useState(false)
-  const [memoryHandled, setMemoryHandled] = useState(false)
+  const [convo, setConvo] = useState<ConvoState>(INITIAL_STATE)
+  const [nodeId, setNodeId] = useState<NodeId>(
+    hasPastMemory && memoriesEnabled ? "memory-prompt" : "opener"
+  )
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const idRef = useRef(1)
+  const convoRef = useRef<ConvoState>(INITIAL_STATE)
+  const nodeRef = useRef<NodeId>(nodeId)
 
-  // Seed the opening message
+  // Keep refs in sync so async setTimeouts read fresh state.
+  useEffect(() => { convoRef.current = convo }, [convo])
+  useEffect(() => { nodeRef.current = nodeId }, [nodeId])
+
+  // Seed the opening message(s) once.
   useEffect(() => {
-    const opener: ChatMessage = {
-      id: idRef.current++,
-      sender: "ai",
-      step: 0,
-      text:
-        "Hello! I'm here to support you today. This is a safe space to share what's on your mind. How are you feeling right now?",
-    }
-    const first: ChatMessage[] = [opener]
-
+    const first: ChatMessage[] = []
     if (hasPastMemory && memoriesEnabled) {
-      // Add a memory-aware follow-up, per the brief.
       first.push({
         id: idRef.current++,
         sender: "ai",
         step: 0,
         text:
-          "Last time we spoke you mentioned feeling uncertain about the Q3 restructuring announcement. Would you like to revisit that, or start fresh today?",
-        replies: ["Revisit that topic", "Start fresh today"],
+          "Welcome back. When we talked last, you said the pace of work was sitting heavy — want to pick that thread back up, or start somewhere new today?",
+        replies: ["Pick it back up", "Start fresh", "Erase that memory"],
       })
     } else {
-      opener.replies = ["Good", "OK", "Not well"]
+      first.push({
+        id: idRef.current++,
+        sender: "ai",
+        step: 0,
+        text:
+          "Hey — glad you came by. No rush, no wrong answers here. How are you feeling right now, honestly?",
+        replies: ["Good", "OK", "Not well"],
+      })
     }
     setMessages(first)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -322,7 +461,8 @@ function ChatView({
     el.scrollTop = el.scrollHeight
   }, [messages, typing])
 
-  const pushAi = (text: string, opts?: { replies?: string[]; step?: ChatStep; delay?: number }) => {
+  // Push a single AI message.
+  const pushAi = (text: string, opts?: { replies?: string[]; step?: ChatStep; delay?: number; node?: NodeId }) => {
     const delay = opts?.delay ?? 700
     setTyping(true)
     setTimeout(() => {
@@ -332,7 +472,25 @@ function ChatView({
         { id: idRef.current++, sender: "ai", text, replies: opts?.replies, step: opts?.step },
       ])
       if (opts?.step !== undefined) setStep(opts.step)
+      if (opts?.node) { setNodeId(opts.node); nodeRef.current = opts.node }
     }, delay)
+  }
+
+  // Push two AI messages in sequence (validate → next). Second one carries the replies.
+  const pushAiPair = (
+    first: string,
+    second: string,
+    opts: { replies?: string[]; step?: ChatStep; node?: NodeId; firstDelay?: number; secondDelay?: number } = {}
+  ) => {
+    pushAi(first, { delay: opts.firstDelay ?? 650 })
+    setTimeout(() => {
+      pushAi(second, {
+        delay: opts.secondDelay ?? 1100,
+        replies: opts.replies,
+        step: opts.step,
+        node: opts.node,
+      })
+    }, 850)
   }
 
   const pushUser = (text: string) => {
@@ -347,100 +505,458 @@ function ChatView({
     advanceConversation(text)
   }
 
-  // Drives the scripted demo conversation.
+  const updateConvo = (patch: Partial<ConvoState>) => {
+    setConvo(c => {
+      const next = { ...c, ...patch }
+      convoRef.current = next
+      return next
+    })
+  }
+
+  // Build the wrap-up mirror sentence from collected state.
+  const buildSummary = (): string => {
+    const c = convoRef.current
+    const parts: string[] = []
+    if (c.mood === "not-well") parts.push("things are feeling heavy right now")
+    else if (c.mood === "ok") parts.push("today is landing somewhere in the middle")
+    else if (c.mood === "good") parts.push("today's in a decent place")
+    if (c.feeling) parts.push(`the word that fit best was "${c.feeling.toLowerCase()}"`)
+    if (c.intensity !== null) parts.push(`you put it around ${c.intensity}/10`)
+    if (c.takeaway) parts.push(`and one thing you named was to ${c.takeaway.toLowerCase()}`)
+    else if (c.choice === "breathing") parts.push("and you gave yourself a minute to breathe")
+    else if (c.choice === "therapist") parts.push("and you opened the door to talking with someone")
+    if (parts.length === 0) return "you came by, and that counts"
+    if (parts.length === 1) return parts[0]
+    return parts.slice(0, -1).join(", ") + ", " + parts[parts.length - 1]
+  }
+
+  // ── Main conversation router ──
   function advanceConversation(userText: string) {
-    const lower = userText.toLowerCase()
+    const lower = userText.toLowerCase().trim()
 
-    // Handle the memory branch on first reply
-    if (hasPastMemory && memoriesEnabled && !memoryHandled) {
-      setMemoryHandled(true)
-      if (
-        lower.includes("revisit") ||
-        lower.includes("that topic") ||
-        lower.includes("q3") ||
-        lower.includes("restructuring")
-      ) {
-        pushAi(
-          "Thanks for letting me come back to that with you. What's sitting with you most about the announcement right now?",
-          { step: 1, replies: ["Worried about my role", "Unclear direction", "The pace of change"] }
-        )
-        return
-      }
-      if (lower.includes("fresh") || lower.includes("new") || lower.includes("start")) {
-        pushAi(
-          "Of course — we'll leave that for another time. How are you feeling today?",
-          { step: 0, replies: ["Good", "OK", "Not well"] }
-        )
-        return
-      }
-      // fall through to normal flow
-    }
-
-    // Step progression
-    if (step === 0) {
-      // Check-in → Reflect
-      pushAi(
-        "Thanks for sharing that. What's contributing to how you're feeling — is there something on your mind?",
-        { step: 1, replies: ["Workload", "Change at work", "Life outside work"] }
-      )
+    // Distress is always the highest-priority branch, regardless of stage.
+    if (isDistress(lower)) {
+      triggerDistress()
       return
     }
 
-    if (step === 1) {
-      // Reflect → Suggest (gentle, no aggregation language)
-      pushAi(
-        "That makes sense, and I appreciate you naming it.",
-        { delay: 600 }
-      )
-      setTimeout(() => {
-        pushAi(
-          "Quick note from leadership that may help: no team-level decisions have been finalized after last week's announcement — the CEO confirmed updates will come by end of month. In the meantime, try taking it one day at a time.",
-          { step: 2, delay: 1200, replies: ["Try a 60-sec reset", "That helps", "Still overwhelmed"] }
-        )
-      }, 900)
-      return
-    }
+    const current = nodeRef.current
 
-    if (step === 2) {
-      // Suggest → Wrap-up (route to Support if they say "overwhelmed")
-      if (lower.includes("overwhelmed") || lower.includes("struggl") || lower.includes("crisis")) {
-        pushAi(
-          "I hear you — that's a lot to carry. Let me point you to a few resources you can reach anytime.",
-          { delay: 500 }
+    switch (current) {
+      // ── Memory prompt (session start, if applicable) ──
+      case "memory-prompt": {
+        if (/(pick|revisit|yes|continue|that)/i.test(lower)) {
+          pushAiPair(
+            "Thank you for letting me come back to that with you.",
+            "What's sitting with you most about it right now — or has anything shifted since we last talked?",
+            { step: 1, node: "feeling-picker",
+              replies: ["Overwhelmed", "Anxious", "Frustrated", "Stuck", "Sad", "Flat", "Something else"] }
+          )
+        } else if (/erase|delete|forget/.test(lower)) {
+          pushAiPair(
+            "Done. Nothing saved on my end.",
+            "Let's start where you actually are today. How are you feeling right now?",
+            { step: 0, node: "opener", replies: ["Good", "OK", "Not well"] }
+          )
+        } else {
+          pushAi(
+            "Totally fine. How are you feeling today?",
+            { step: 0, node: "opener", replies: ["Good", "OK", "Not well"] }
+          )
+        }
+        return
+      }
+
+      // ── Stage 0 · Check-in ──
+      case "opener": {
+        if (/not\s*well|bad|awful|terrible|low|down|rough|not\s*great|struggl/.test(lower)) {
+          updateConvo({ mood: "not-well" })
+          pushAi(
+            "I'm sorry it's like that right now — I'm glad you said it. Is this more tied to work, life outside work, or both?",
+            { node: "mood-notwell-area", replies: ["Work", "Life outside work", "Both", "Not sure"] }
+          )
+        } else if (/^ok\b|okay|fine|meh|so-?so|alright/.test(lower)) {
+          updateConvo({ mood: "ok" })
+          pushAi(
+            "Thanks for being honest — \"ok\" is a real answer. Is there something on your mind you'd like to look at, or would you rather just take a minute?",
+            { node: "mood-ok-choice", replies: ["Something on my mind", "Just take a minute"] }
+          )
+        } else if (/good|great|well|fine\s*actually|positive/.test(lower)) {
+          updateConvo({ mood: "good" })
+          pushAi(
+            "Glad to hear that. Even on good days, checking in matters. What's giving you a lift — work, life outside work, or both?",
+            { node: "mood-good-area", replies: ["Work", "Life outside work", "Both", "Not sure"] }
+          )
+        } else {
+          // Freeform: treat as a disclosure and reflect.
+          updateConvo({ mood: "ok" })
+          pushAi(
+            "Thanks for putting words to it. Would it help to look at what's behind that a little, or would you rather just sit with it for a minute?",
+            { node: "mood-ok-choice", replies: ["Look at it a little", "Just take a minute"] }
+          )
+        }
+        return
+      }
+
+      case "mood-good-area": {
+        const area = parseArea(lower)
+        updateConvo({ area })
+        pushAiPair(
+          "That's good to hear.",
+          "Since you're here, do you want to keep going with a quick reflection, or is this check-in enough for today? Both are valid.",
+          { node: "good-wrap", replies: ["Quick reflection", "This is enough", "Actually, not as good as I said"] }
         )
+        return
+      }
+
+      case "good-wrap": {
+        if (/reflection|keep|quick/.test(lower)) {
+          pushAi(
+            "Okay — gently. If you had to put a word on today's vibe, which feels closest?",
+            { step: 1, node: "feeling-picker",
+              replies: ["Calm", "Focused", "Content", "Tired but okay", "Flat", "Something else"] }
+          )
+        } else if (/not\s*as\s*good|actually|worse|lie/.test(lower)) {
+          updateConvo({ mood: "not-well" })
+          pushAi(
+            "Thank you for saying that out loud. It's okay to rewrite the answer. Is this more tied to work, life outside work, or both?",
+            { node: "mood-notwell-area", replies: ["Work", "Life outside work", "Both", "Not sure"] }
+          )
+        } else {
+          pushAi(
+            "Good call. Thanks for checking in — I'll be here whenever you want to come back.",
+            { step: 3, node: "close", replies: ["End check-in"] }
+          )
+        }
+        return
+      }
+
+      case "mood-ok-choice": {
+        if (/minute|sit|just|breath/.test(lower)) {
+          pushAiPair(
+            "Okay — no agenda.",
+            "You can step away whenever. If you want a soft 60-second breathing reset, I can open it for you. Otherwise, I'm here.",
+            { step: 2, node: "breathing-suggest", replies: ["Open breathing reset", "Just sit for a minute", "Actually, let's talk"] }
+          )
+        } else {
+          pushAi(
+            "Okay. Is this more tied to work, life outside work, or both?",
+            { node: "mood-notwell-area", replies: ["Work", "Life outside work", "Both", "Not sure"] }
+          )
+        }
+        return
+      }
+
+      case "mood-notwell-area": {
+        const area = parseArea(lower)
+        updateConvo({ area })
+        pushAiPair(
+          areaReflect(area),
+          "If you had to put one word on how it's landing, which feels closest? There's no wrong pick.",
+          { step: 1, node: "feeling-picker",
+            replies: ["Overwhelmed", "Anxious", "Frustrated", "Stuck", "Sad", "Flat", "Something else"] }
+        )
+        return
+      }
+
+      // ── Stage 1 · Reflect ──
+      case "feeling-picker": {
+        const feeling = parseFeeling(lower, userText)
+        updateConvo({ feeling })
+        pushAi(feelingValidate(feeling), { delay: 600 })
         setTimeout(() => {
           pushAi(
-            "You can open the Support tab for a confidential crisis line, a therapist, a 60-second breathing reset, or short reads.",
-            { step: 3, delay: 1100, replies: ["Open Support", "Finish check-in"] }
+            "On a scale of 1 to 10, how loud is that feeling right now? 1 is barely there, 10 is as big as it gets.",
+            { delay: 1100, node: "scale",
+              replies: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"] }
           )
         }, 900)
         return
       }
-      pushAi(
-        "Great. Here's something you can try right now: 4 slow breaths — in for 4, out for 6. It takes under a minute and can soften the edges of a tough moment.",
-        { delay: 600 }
-      )
-      setTimeout(() => {
-        pushAi(
-          "Before we wrap: is there one small thing you'd like to carry into the rest of your day?",
-          { step: 3, delay: 1100, replies: ["A calmer mindset", "A clearer focus", "Skip — I'm good"] }
-        )
-      }, 1000)
-      return
-    }
 
-    if (step === 3) {
-      // Wrap-up
-      if (lower.includes("open support")) {
-        pushAi("Opening Support now. Take care of yourself.", { delay: 400 })
-        setTimeout(onOpenSupport, 600)
+      case "scale": {
+        const n = parseIntensity(lower)
+        if (n === null) {
+          pushAi(
+            "No pressure on the number — rough is fine. Low, medium, or high?",
+            { replies: ["Low (1–3)", "Medium (4–6)", "High (7–9)", "Peak (10)"] }
+          )
+          return
+        }
+        if (n >= 10) { triggerDistress(); return }
+        updateConvo({ intensity: n })
+        pushAiPair(
+          scaleAck(n),
+          "Would it help to try one small thing together, or would you rather just be heard today? Either is fine — really.",
+          { step: 2, node: "permission",
+            replies: ["Try one small thing", "Just want to be heard", "Not sure"] }
+        )
         return
       }
-      pushAi(
-        "Thank you for checking in today. See you next time.",
-        { delay: 700 }
-      )
+
+      // ── Stage 2 · Suggest ──
+      case "permission": {
+        if (/heard|just|listen|vent|sit/.test(lower)) {
+          pushAiPair(
+            heardDeep(convoRef.current),
+            "You don't owe me a plan. Whenever you're ready to close out, just say the word.",
+            { node: "heard-deep", replies: ["One small thing after all", "Close out for today"] }
+          )
+        } else if (/try|one|small|sure|yes|okay|ok/.test(lower)) {
+          offerOptions()
+        } else {
+          // Not sure
+          pushAi(
+            "No pressure. I can list a couple of small things — you can always pass.",
+            { node: "permission", replies: ["Sure, list them", "Just be heard", "End check-in"] }
+          )
+        }
+        return
+      }
+
+      case "heard-deep": {
+        if (/one\s*small|try|something/.test(lower)) { offerOptions(); return }
+        goToSummary()
+        return
+      }
+
+      case "options": {
+        if (/breath|reset|60/.test(lower)) {
+          updateConvo({ choice: "breathing" })
+          pushAi(
+            "Good pick. 60 seconds, inhale 4, exhale 6. It's a soft anchor, not a fix — that's the point.",
+            { delay: 600, node: "breathing-suggest", replies: ["Open breathing now", "Maybe later"] }
+          )
+        } else if (/refram|angle|question|shift|perspective/.test(lower)) {
+          updateConvo({ choice: "reframe" })
+          pushAi(
+            "Here's the question: what's one part of today — even a small one — that went a little better than you expected? No need to force it.",
+            { delay: 600, node: "reframe-ask", replies: ["Nothing comes to mind", "Skip for now"] }
+          )
+        } else if (/boundar|plate|pause|delegate|hand/.test(lower)) {
+          updateConvo({ choice: "boundary" })
+          pushAi(
+            "Okay. If you could take one thing off your plate today — pause it, push it to tomorrow, or ask for help — what would it be? Just naming it counts.",
+            { delay: 600, node: "boundary-ask", replies: ["Not sure yet", "Skip for now"] }
+          )
+        } else if (/therapist|professional|person|talk\s*to/.test(lower)) {
+          updateConvo({ choice: "therapist" })
+          pushAi(
+            "That's a real step. I can open Aura's private therapist booking for you — free, confidential, no tie to work.",
+            { delay: 600, node: "therapist-suggest", replies: ["Open therapist booking", "Not today"] }
+          )
+        } else {
+          offerOptions()
+        }
+        return
+      }
+
+      case "breathing-suggest": {
+        if (/open|yes|now|sure|ok/.test(lower)) {
+          pushAi("Opening it now. Come back when you're ready — I'll be here.", { delay: 400 })
+          setTimeout(onOpenSupport, 700)
+          return
+        }
+        goToSummary()
+        return
+      }
+
+      case "reframe-ask": {
+        if (/nothing|skip|pass|can(?:'|)t/.test(lower)) {
+          pushAi(
+            "That's okay. Some days, the honest answer is \"not today\" — and that's still information.",
+            { delay: 600 }
+          )
+          setTimeout(goToSummary, 1100)
+          return
+        }
+        updateConvo({ takeaway: userText.slice(0, 80) })
+        pushAi(
+          "That's a real answer. Small things like that compound.",
+          { delay: 600 }
+        )
+        setTimeout(goToSummary, 1100)
+        return
+      }
+
+      case "boundary-ask": {
+        if (/not\s*sure|skip|pass|can(?:'|)t|dunno/.test(lower)) {
+          pushAi(
+            "Fair. Even sitting with the question is a kind of answer.",
+            { delay: 600 }
+          )
+          setTimeout(goToSummary, 1100)
+          return
+        }
+        updateConvo({ takeaway: userText.slice(0, 80) })
+        pushAi(
+          "Naming it is already most of the work. See what feels possible — no pressure either way.",
+          { delay: 600 }
+        )
+        setTimeout(goToSummary, 1100)
+        return
+      }
+
+      case "therapist-suggest": {
+        if (/open|yes|book|now|sure|ok/.test(lower)) {
+          pushAi("Opening it for you. Everything there is confidential.", { delay: 400 })
+          setTimeout(onOpenSupport, 700)
+          return
+        }
+        pushAi(
+          "No pressure. The door's open whenever — from this chat or the Support tab.",
+          { delay: 600 }
+        )
+        setTimeout(goToSummary, 1000)
+        return
+      }
+
+      // ── Stage 3 · Wrap-up ──
+      case "summary": {
+        if (/not\s*quite|off|wrong/.test(lower)) {
+          pushAi(
+            "Thanks for telling me — I'd rather get it right than get it fast. What did I miss?",
+            { node: "summary" }
+          )
+          return
+        }
+        pushAiPair(
+          "Thanks for showing up today. That took something, even if it didn't feel like much.",
+          memoriesEnabled
+            ? "Want me to remember this conversation for next time, or start fresh when you come back?"
+            : "I don't keep anything from this chat — it starts clean next time. See you soon.",
+          memoriesEnabled
+            ? { node: "memory-save", replies: ["Remember this", "Start fresh next time"] }
+            : { node: "close", replies: ["End check-in"] }
+        )
+        return
+      }
+
+      case "memory-save": {
+        if (/start\s*fresh|don(?:'|)t|no|erase|clean/.test(lower)) {
+          pushAi(
+            "Okay — nothing saved. Clean slate next time. Take care of yourself today.",
+            { node: "close", replies: ["End check-in"] }
+          )
+        } else {
+          pushAi(
+            "Okay — I'll hold onto the shape of this, not the details. Take care of yourself today.",
+            { node: "close", replies: ["End check-in"] }
+          )
+        }
+        return
+      }
+
+      case "close": {
+        pushAi(
+          "I'm here whenever you need to talk. There's no wrong time.",
+          { delay: 500 }
+        )
+        return
+      }
+
+      // ── Distress branch ──
+      case "distress-1": {
+        // After Aura's first distress message, show the three options.
+        showDistressOptions()
+        return
+      }
+
+      case "distress-options": {
+        if (/988|call|text|crisis/.test(lower)) {
+          pushAi(
+            "Good. I'm opening the crisis line now — you can call or text. You don't have to explain yourself first.",
+            { delay: 400 }
+          )
+          setTimeout(onOpenSupport, 700)
+          return
+        }
+        if (/therap|urgent|session|book/.test(lower)) {
+          pushAi(
+            "Okay — I'm opening a private therapist session now. It's confidential and free.",
+            { delay: 400 }
+          )
+          setTimeout(onOpenSupport, 700)
+          return
+        }
+        if (/stay|keep\s*talking|here|talk/.test(lower)) {
+          pushAi(
+            "Okay. I'm not going anywhere. Tell me whatever you want — you don't have to make it make sense.",
+            { node: "distress-stay" }
+          )
+          return
+        }
+        showDistressOptions()
+        return
+      }
+
+      case "distress-stay": {
+        // Keep responses short and validating; do not problem-solve.
+        pushAi(
+          "Thank you for saying that. I'm with you.",
+          { delay: 600 }
+        )
+        setTimeout(() => {
+          pushAi(
+            "Whenever you're ready — 988 or a therapist through Aura are both there. Nothing has to happen right now.",
+            { delay: 1100, node: "distress-options",
+              replies: ["Call or text 988", "Book urgent therapist", "Keep talking"] }
+          )
+        }, 1000)
+        return
+      }
+
+      default:
+        // Fallback: steer back to wrap-up.
+        goToSummary()
+        return
     }
+  }
+
+  // ── Helpers used by the router ──
+
+  function offerOptions() {
+    const intensity = convoRef.current.intensity ?? 0
+    const base = [
+      "60-second breathing reset",
+      "A gentle reframe",
+      "A boundary idea",
+    ]
+    if (intensity >= 8) base.push("Talk to a therapist")
+    pushAi(
+      "Okay. Three small options — pick whichever sounds easiest right now. You can also skip.",
+      { node: "options", replies: [...base, "Actually, just be heard"] }
+    )
+  }
+
+  function goToSummary() {
+    const summary = buildSummary()
+    pushAi(
+      `Here's what I heard — ${summary}. Did I get that close to right?`,
+      { step: 3, node: "summary", replies: ["Yep, that's it", "Close enough", "Not quite"] }
+    )
+  }
+
+  function triggerDistress() {
+    pushAi(
+      "What you just said landed with me. I'm really glad you said it out loud.",
+      { delay: 500 }
+    )
+    setTimeout(() => {
+      pushAi(
+        "Please know you don't have to carry this alone right now.",
+        { delay: 900, node: "distress-1" }
+      )
+      setTimeout(showDistressOptions, 1200)
+    }, 800)
+  }
+
+  function showDistressOptions() {
+    pushAi(
+      "Here are three things we can do — whichever feels closest.",
+      { delay: 600, node: "distress-options",
+        replies: ["Call or text 988", "Book urgent therapist", "Stay here and keep talking"] }
+    )
   }
 
   return (
@@ -1357,7 +1873,7 @@ function ArticlesPage() {
       read: "3 min read",
       category: "Workload",
       body:
-        "When the to-do list grows faster than you can cross it off, your body signals overload long before you consciously notice. A useful first step is to externalize — list the 3 things that truly matter today, and give yourself permission to let the rest wait. Progress on the right thing beats motion on everything.",
+        "When the to-do list grows faster than you can cross it off, your body signals overload long before you consciously notice. A useful first step is to externalize ��� list the 3 things that truly matter today, and give yourself permission to let the rest wait. Progress on the right thing beats motion on everything.",
     },
     {
       id: "clarity",
